@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
-from mesa import Agent
+from mesa import Agent, Model
 
-from communication.mailbox.Mailbox import Mailbox
-from communication.message.MessageService import MessageService
+from ..mailbox.Mailbox import Mailbox
+from ..message.MessageService import MessageService
+from ..message.Message import Message
+from ..message.MessagePerformative import MessagePerformative
 
 
 class CommunicatingAgent(Agent):
@@ -16,52 +18,49 @@ class CommunicatingAgent(Agent):
     attr:
         name: The name of the agent (str)
         mailbox: The mailbox of the agent (Mailbox)
-        message_service: The message service used to send and receive message (MessageService)
+        message_service: The message service used to send and receive message
+            (MessageService)
     """
 
-    def __init__(self, unique_id, model, name):
-        """ Create a new communicating agent.
-        """
+    def __init__(self, unique_id: int, model: Model, name: str) -> None:
+        """Create a new communicating agent."""
         super().__init__(unique_id, model)
         self.__name = name
         self.__mailbox = Mailbox()
         self.__messages_service = MessageService.get_instance()
 
-    def step(self):
-        """ The step methods of the agent called by the scheduler at each time tick.
-        """
+    def step(self) -> None:
+        """The step methods of the agent called by the scheduler at each time tick."""
         super().step()
 
-    def get_name(self):
-        """ Return the name of the communicating agent."""
+    def get_name(self) -> str:
+        """Return the name of the communicating agent."""
         return self.__name
 
-    def receive_message(self, message):
-        """ Receive a message (called by the MessageService object) and store it in the mailbox.
-        """
+    def receive_message(self, message: Message) -> None:
+        """Receive a message and store it in the mailbox.
+
+        Called by the MessageService object."""
         self.__mailbox.receive_messages(message)
 
-    def send_message(self, message):
-        """ Send message through the MessageService object.
-        """
+    def send_message(self, message: Message) -> None:
+        """Send message through the MessageService object."""
         self.__messages_service.send_message(message)
 
-    def get_new_messages(self):
-        """ Return all the unread messages.
-        """
+    def get_new_messages(self) -> list[Message]:
+        """Return all the unread messages."""
         return self.__mailbox.get_new_messages()
 
-    def get_messages(self):
-        """ Return all the received messages.
-        """
+    def get_messages(self) -> list[Message]:
+        """Return all the received messages."""
         return self.__mailbox.get_messages()
 
-    def get_messages_from_performative(self, performative):
-        """ Return a list of messages which have the same performative.
-        """
+    def get_messages_from_performative(
+        self, performative: MessagePerformative
+    ) -> list[Message]:
+        """Return a list of messages which have the same performative."""
         return self.__mailbox.get_messages_from_performative(performative)
 
-    def get_messages_from_exp(self, exp):
-        """ Return a list of messages which have the same sender.
-        """
+    def get_messages_from_exp(self, exp: str) -> list[Message]:
+        """Return a list of messages which have the same sender."""
         return self.__mailbox.get_messages_from_exp(exp)
