@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-from communication.preferences.CriterionName import CriterionName
-from communication.preferences.CriterionValue import CriterionValue
-from communication.preferences.Item import Item
-from communication.preferences.Value import Value
+from .CriterionName import CriterionName
+from .CriterionValue import CriterionValue
+from .Item import Item
+from .Value import Value
 
 
 class Preferences:
