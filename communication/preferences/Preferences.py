@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-from typing import Dict, List
+import os
+from typing import List
 import random
 import math
 import pandas as pd
@@ -22,8 +23,8 @@ class Preferences:
 
     def __init__(self) -> None:
         """Creates a new Preferences object."""
-        self.__criterion_name_list: list[CriterionName] = []
-        self.__criterion_value_list: list[CriterionValue] = []
+        self.__criterion_name_list: List[CriterionName] = []
+        self.__criterion_value_list: List[CriterionValue] = []
 
     @staticmethod
     def generate_random(items: List[Item]):
@@ -42,37 +43,59 @@ class Preferences:
 
         return p
 
-    def read_values_from_csv(
-        self, filepath: str, items: Dict[str, Item] = {}
-    ) -> Dict[str, Item]:
+    @staticmethod
+    def load(dir_path: str, items: List[Item]):
+        p = Preferences()
+        p.read_criteria_from_csv(os.path.join(dir_path, "criteria.csv"))
+        p.read_values_from_csv(os.path.join(dir_path, "values.csv"), items)
+        return p
+
+    def read_criteria_from_csv(self, filepath: str):
+        data = pd.read_csv(filepath)
+
+        # Sort by rank (top rank == 0)
+        data.sort_values("rank", ascending=True, inplace=True)
+
+        # Convert from str to CriterionName
+        criterion_name_list = []
+        for c in data["criterion_name"]:
+            criterion_name_list.append(CriterionName[c])
+
+        # Set criteria
+        self.set_criterion_name_list(criterion_name_list)
+
+    def read_values_from_csv(self, filepath: str, items: List[Item]):
         data = pd.read_csv(filepath)
 
         # Create any items which are missing in the items dictionary
+        items_dict = {item.get_name(): item for item in items}
         for item_name in data["item"].unique():
-            if item_name not in items:
-                items[item_name] = Item(item_name, "")
+            if item_name not in items_dict:
+                i = Item(item_name, "")
+                items_dict[item_name] = i
+                items.append(i)
 
         # Go through each row and add the corresponding criterion value
         for _, row in data.iterrows():
             # Parse this row's data
-            item = items[row["item"]]
+            item = items_dict[row["item"]]
             criterion_name = CriterionName[row["criterion_name"]]
             value = Value[row["value"]]
 
             # Add it to the preferences
             self.add_criterion_value(CriterionValue(item, criterion_name, value))
 
-        return items
+        return items_dict
 
     def get_criterion_name_list(self):
         """Returns the list of criterion name."""
         return self.__criterion_name_list
 
-    def get_criterion_value_list(self) -> list[CriterionValue]:
+    def get_criterion_value_list(self) -> List[CriterionValue]:
         """Returns the list of criterion value."""
         return self.__criterion_value_list
 
-    def set_criterion_name_list(self, criterion_name_list: list[CriterionName]):
+    def set_criterion_name_list(self, criterion_name_list: List[CriterionName]):
         """Sets the list of criterion name."""
         self.__criterion_name_list = criterion_name_list
 
@@ -105,7 +128,7 @@ class Preferences:
         """Returns if the item 1 is preferred to the item 2."""
         return item_1.get_score(self) > item_2.get_score(self)
 
-    def most_preferred(self, item_list: list[Item]) -> Item:
+    def most_preferred(self, item_list: List[Item]) -> Item:
         """Returns the most preferred item from a list."""
 
         # compute scores to each item and filter only the best scores
@@ -118,7 +141,7 @@ class Preferences:
 
         return selected_item
 
-    def is_item_among_top_10_percent(self, item: Item, item_list: list[Item]) -> bool:
+    def is_item_among_top_10_percent(self, item: Item, item_list: List[Item]) -> bool:
         """
         Return whether a given item is among the top 10 percent of the preferred items.
 
@@ -228,35 +251,38 @@ if __name__ == "__main__":
     )
 
     # Test reading preferences from csv for agent 1
-    p = Preferences()
-    p.set_criterion_name_list(
-        [
-            CriterionName.PRODUCTION_COST,  # c1
-            CriterionName.ENVIRONMENT_IMPACT,  # c4
-            CriterionName.CONSUMPTION,  # c2
-            CriterionName.DURABILITY,  # c3
-            CriterionName.NOISE,  # c5
-        ]
-    )
-    items = {"ICED": diesel_engine}
-    items = p.read_values_from_csv("data/agent_1.csv", items)
-    assert items["ICED"] == diesel_engine, "Existing items are not changed"
-    assert "E" in items, "Missing items are added"
-    assert p.get_value(items["ICED"], CriterionName.CONSUMPTION) == Value.AVERAGE
-    assert p.get_value(items["E"], CriterionName.ENVIRONMENT_IMPACT) == Value.GOOD
+    items = []
+    p = Preferences.load("data/agent_1", items)
+    assert p.get_criterion_name_list() == [
+        CriterionName.PRODUCTION_COST,  # c1
+        CriterionName.ENVIRONMENT_IMPACT,  # c4
+        CriterionName.CONSUMPTION,  # c2
+        CriterionName.DURABILITY,  # c3
+        CriterionName.NOISE,  # c5
+    ]
+    assert len(items) == 2, "Missing items should be added"
+    assert {i.get_name() for i in items} == {
+        "ICED",
+        "E",
+    }, "The correct items should be added"
+    # Ensure ICED is the first item for the remainder of the tests
+    if items[0].get_name() == "E":
+        items.reverse()
+    assert p.get_value(items[0], CriterionName.CONSUMPTION) == Value.AVERAGE
+    assert p.get_value(items[1], CriterionName.ENVIRONMENT_IMPACT) == Value.GOOD
 
     # Test reading preferences from csv for agent 2
-    p = Preferences()
-    p.set_criterion_name_list(
-        [
-            CriterionName.ENVIRONMENT_IMPACT,  # c4
-            CriterionName.NOISE,  # c5
-            CriterionName.PRODUCTION_COST,  # c1
-            CriterionName.CONSUMPTION,  # c2
-            CriterionName.DURABILITY,  # c3
-        ]
-    )
-    items = p.read_values_from_csv("data/agent_2.csv", items)
-    assert p.get_value(items["ICED"], CriterionName.CONSUMPTION) == Value.BAD
-    assert p.get_value(items["E"], CriterionName.ENVIRONMENT_IMPACT) == Value.GOOD
+    old_items = items.copy()
+    p = Preferences.load("data/agent_2", items)
+    assert p.get_criterion_name_list() == [
+        CriterionName.ENVIRONMENT_IMPACT,  # c4
+        CriterionName.NOISE,  # c5
+        CriterionName.PRODUCTION_COST,  # c1
+        CriterionName.CONSUMPTION,  # c2
+        CriterionName.DURABILITY,  # c3
+    ]
+    assert items == old_items, "Existing items should not be replaced"
+    assert p.get_value(items[0], CriterionName.CONSUMPTION) == Value.BAD
+    assert p.get_value(items[1], CriterionName.ENVIRONMENT_IMPACT) == Value.GOOD
+
     print("read_value_from_csv OK")
