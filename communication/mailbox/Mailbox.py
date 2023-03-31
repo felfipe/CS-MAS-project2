@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:
     from ..message.Message import Message
@@ -26,7 +26,7 @@ class Mailbox:
         """Receive a message and add it in the unread messages list."""
         self.__unread_messages.append(message)
 
-    def get_new_messages(self) -> list["Message"]:
+    def get_new_messages(self) -> List["Message"]:
         """Return all the messages from unread messages list."""
         unread_messages = self.__unread_messages.copy()
         if len(unread_messages) > 0:
@@ -36,7 +36,7 @@ class Mailbox:
         self.__unread_messages.clear()
         return unread_messages
 
-    def get_messages(self) -> list["Message"]:
+    def get_messages(self) -> List["Message"]:
         """Return all the messages from both unread and read messages list."""
         if len(self.__unread_messages) > 0:
             self.get_new_messages()
@@ -44,7 +44,7 @@ class Mailbox:
 
     def get_messages_from_performative(
         self, performative: "MessagePerformative"
-    ) -> list["Message"]:
+    ) -> List["Message"]:
         """Return a list of messages which have the same performative."""
         messages_from_performative = []
         for message in self.__unread_messages + self.__read_messages:
@@ -52,7 +52,7 @@ class Mailbox:
                 messages_from_performative.append(message)
         return messages_from_performative
 
-    def get_messages_from_exp(self, exp: str) -> list["Message"]:
+    def get_messages_from_exp(self, exp: str) -> List["Message"]:
         """Return a list of messages which have the same sender."""
         messages_from_exp = []
         for message in self.__unread_messages + self.__read_messages:

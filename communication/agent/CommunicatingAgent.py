@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from typing import List
 from mesa import Agent, Model
 
 from ..mailbox.Mailbox import Mailbox
@@ -47,20 +48,20 @@ class CommunicatingAgent(Agent):
         """Send message through the MessageService object."""
         self.__messages_service.send_message(message)
 
-    def get_new_messages(self) -> list[Message]:
+    def get_new_messages(self) -> List[Message]:
         """Return all the unread messages."""
         return self.__mailbox.get_new_messages()
 
-    def get_messages(self) -> list[Message]:
+    def get_messages(self) -> List[Message]:
         """Return all the received messages."""
         return self.__mailbox.get_messages()
 
     def get_messages_from_performative(
         self, performative: MessagePerformative
-    ) -> list[Message]:
+    ) -> List[Message]:
         """Return a list of messages which have the same performative."""
         return self.__mailbox.get_messages_from_performative(performative)
 
-    def get_messages_from_exp(self, exp: str) -> list[Message]:
+    def get_messages_from_exp(self, exp: str) -> List[Message]:
         """Return a list of messages which have the same sender."""
         return self.__mailbox.get_messages_from_exp(exp)

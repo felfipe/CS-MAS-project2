@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
+from typing import Any
+from .MessagePerformative import MessagePerformative
+
 
 class Message:
     """Message class.
-
-    Class implementing the message object which is exchanged
-    between agents through a message service during communication.
+    Class implementing the message object which is exchanged between agents through
+    a message service during communication.
 
     attr:
         from_agent: the sender of the message (id)
@@ -14,7 +16,13 @@ class Message:
         content: the content of the message
     """
 
-    def __init__(self, from_agent, to_agent, message_performative, content):
+    def __init__(
+        self,
+        from_agent: str,
+        to_agent: str,
+        message_performative: MessagePerformative,
+        content: Any,
+    ):
         """Create a new message."""
         self.__from_agent = from_agent
         self.__to_agent = to_agent
@@ -34,18 +42,18 @@ class Message:
             + str(self.__content)
         )
 
-    def get_exp(self):
+    def get_exp(self) -> str:
         """Return the sender of the message."""
         return self.__from_agent
 
-    def get_dest(self):
+    def get_dest(self) -> str:
         """Return the receiver of the message."""
         return self.__to_agent
 
-    def get_performative(self):
+    def get_performative(self) -> MessagePerformative:
         """Return the performative of the message."""
         return self.__message_performative
 
-    def get_content(self):
+    def get_content(self) -> Any:
         """Return the content of the message."""
         return self.__content
