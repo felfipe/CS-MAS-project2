@@ -3,6 +3,8 @@ from mesa.time import RandomActivation
 
 from communication.agent.CommunicatingAgent import CommunicatingAgent
 from communication.message.MessageService import MessageService
+from communication.message.Message import Message
+from communication.message.MessagePerformative import MessagePerformative
 from communication.preferences.Preferences import Preferences
 from communication.preferences.CriterionName import CriterionName
 from communication.preferences.CriterionValue import CriterionValue
@@ -30,9 +32,9 @@ class ArgumentModel(Model):
     """ArgumentModel which inherit from Model"""
 
     def __init__(self):
+        super().__init__()
         self.scheduler = RandomActivation(self)
         self.__messages_service = MessageService(self.scheduler)
-
         self.diesel_engine = Item("ICED", "A super cool diesel engine")
         self.electric_engine = Item("E", "A very quiet engine")
         items = [self.diesel_engine, self.electric_engine]
@@ -58,3 +60,18 @@ if __name__ == "__main__":
     argument_model = ArgumentModel()
 
     # To be completed 
+    argument_model.agent_1.send_message(
+        Message(argument_model.agent_1.get_name(), argument_model.agent_2.get_name(), MessagePerformative.PROPOSE, argument_model.diesel_engine)
+        )
+
+    print(*argument_model.agent_2.get_new_messages(), sep='\n')
+    
+    argument_model.step()
+    argument_model.agent_2.send_message(
+        Message(argument_model.agent_2.get_name(), argument_model.agent_1.get_name(), MessagePerformative.ACCEPT, argument_model.diesel_engine)
+        )
+    
+    print(*argument_model.agent_1.get_new_messages(), sep='\n')
+
+ 
+
