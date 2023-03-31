@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from mesa import Model
 from mesa.time import RandomActivation
 
@@ -11,6 +11,9 @@ from communication.preferences.CriterionName import CriterionName
 from communication.preferences.CriterionValue import CriterionValue
 from communication.preferences.Item import Item
 from communication.preferences.Value import Value
+from communication.arguments.CoupleValue import CoupleValue
+from communication.arguments.Comparison import Comparison
+from communication.arguments.Argument import Argument
 
 
 class ArgumentAgent(CommunicatingAgent):
@@ -27,6 +30,52 @@ class ArgumentAgent(CommunicatingAgent):
 
     def get_preferences(self):
         return self.preferences
+
+    def get_supporting_premises(self, item: "Item") -> List["CoupleValue"]:
+        """Generates a list of premisses which can be used to support an item
+
+        params:
+            item (Item): name of the item
+        returns:
+            list of all premisses PRO an item (sorted by order of importance
+            based on agent's preferences)
+        """
+        prems = []
+        for criterion_name in self.preferences.get_criterion_name_list():
+            value = self.preferences.get_value(item, criterion_name)
+            if value.value >= Value.GOOD.value:
+                prems.append(CoupleValue(criterion_name, value))
+
+        return prems
+
+    def get_attacking_premises(self, item: "Item") -> List["CoupleValue"]:
+        """Generates a list of premisses which can be used to attack an item
+
+        params:
+            item (Item): name of the item
+        returns:
+            list of all premisses CON an item (sorted by order of importance
+            based on agent's preferences)
+        """
+
+        prems = []
+        for criterion_name in self.preferences.get_criterion_name_list():
+            value = self.preferences.get_value(item, criterion_name)
+            if value.value <= Value.BAD.value:
+                prems.append(CoupleValue(criterion_name, value))
+
+        return prems
+
+    def support_proposal(self, item: Item) -> Argument:
+        """Used when the agent receives "ASK_WHY" after having proposed an item
+
+        params:
+            item (str): name of the item which was proposed
+        returns:
+            string - the strongest supportive argument
+        """
+        premises = self.get_supporting_premises(item)
+        return Argument(item, decision=True, couple_values=[premises[0]])
 
 
 class ArgumentModel(Model):
