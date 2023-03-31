@@ -6,7 +6,7 @@ from typing import Optional, TYPE_CHECKING
 if TYPE_CHECKING:
     from ..agent.CommunicatingAgent import CommunicatingAgent
     from mesa.time import BaseScheduler
-    from .Message import Message
+from .Message import Message
 
 
 class MessageService:
@@ -21,7 +21,6 @@ class MessageService:
         scheduler: the scheduler of the sma (Scheduler)
         messages_to_proceed: the list of message to proceed mailbox of the agent (list)
     """
-
     __instance: Optional["MessageService"] = None
 
     @staticmethod
@@ -55,7 +54,16 @@ class MessageService:
 
     def dispatch_message(self, message: "Message") -> None:
         """Dispatch the message to the right agent."""
-        self.find_agent_from_name(message.get_dest()).receive_message(message)
+
+        if(message.get_dest() == None):
+            for agent in self.__scheduler.agents:
+                agent: "CommunicatingAgent"
+                if agent.get_name() == message.get_exp():
+                    continue
+                new_message = Message(message.get_exp(), agent.get_name(), message.get_performative(), message.get_content())
+                agent.receive_message(new_message)
+        else:
+            self.find_agent_from_name(message.get_dest()).receive_message(message)
 
     def dispatch_messages(self) -> None:
         """Proceed each message received by the message service."""

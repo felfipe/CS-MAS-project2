@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
 from typing import Any
+from typing import Optional
 from .MessagePerformative import MessagePerformative
 
-
+BROADCAST = None
 class Message:
     """Message class.
     Class implementing the message object which is exchanged between agents through
@@ -19,7 +20,7 @@ class Message:
     def __init__(
         self,
         from_agent: str,
-        to_agent: str,
+        to_agent: Optional[str],
         message_performative: MessagePerformative,
         content: Any,
     ):
