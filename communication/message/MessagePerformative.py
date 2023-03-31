@@ -13,8 +13,6 @@ class MessagePerformative(Enum):
     COMMIT = 103
     ASK_WHY = 104
     ARGUE = 105
-    QUERY_REF = 106
-    INFORM_REF = 107
 
     def __str__(self):
         """Returns the name of the enum item."""
