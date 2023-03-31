@@ -5,6 +5,8 @@ from .CriterionValue import CriterionValue
 from .Item import Item
 from .Value import Value
 
+import random
+import math
 
 class Preferences:
     """Preferences class.
@@ -63,8 +65,16 @@ class Preferences:
 
     def most_preferred(self, item_list: list[Item]) -> Item:
         """Returns the most preferred item from a list."""
-        # To be completed
-        raise NotImplementedError()
+
+        # compute scores to each item and filter only the best scores
+        scores = [(item.get_score(self), item) for item in item_list]
+        max_score = max(scores)[0]
+        best_scores = [item for item in scores if item[0] == max_score]
+
+        # select randomly among the best scores
+        selected_item = random.choice(best_scores)[1]
+        
+        return selected_item
 
     def is_item_among_top_10_percent(self, item: Item, item_list: list[Item]) -> bool:
         """
@@ -72,9 +82,17 @@ class Preferences:
 
         :return: a boolean, True means that the item is among the favourite ones
         """
-        # To be completed
-        raise NotImplementedError()
+        item_list = item_list.copy()
 
+        # take the ceil of the resulting division
+        k_top10 = math.ceil(len(item_list) / 10)
+
+        item_list.sort(key= lambda item : item.get_score(self), reverse=True)
+        
+        if item in item_list[:k_top10]:
+            return True
+        
+        return False
 
 if __name__ == "__main__":
     """Testing the Preferences class."""
@@ -157,3 +175,10 @@ if __name__ == "__main__":
             agent_pref.most_preferred([diesel_engine, electric_engine]).get_name()
         )
     )
+
+    print(
+        "Diesel is in top 10 percent : {}".format(
+            agent_pref.is_item_among_top_10_percent(diesel_engine, [diesel_engine, electric_engine])
+        )
+    )
+
