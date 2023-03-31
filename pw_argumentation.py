@@ -1,3 +1,4 @@
+from typing import Optional
 from mesa import Model
 from mesa.time import RandomActivation
 
@@ -31,25 +32,33 @@ class ArgumentAgent(CommunicatingAgent):
 class ArgumentModel(Model):
     """ArgumentModel which inherit from Model"""
 
-    def __init__(self):
+    def __init__(
+        self, prefs_agent_1: Optional[str] = None, prefs_agent_2: Optional[str] = None
+    ):
         super().__init__()
         self.scheduler = RandomActivation(self)
         self.__messages_service = MessageService(self.scheduler)
         self.diesel_engine = Item("ICED", "A super cool diesel engine")
         self.electric_engine = Item("E", "A very quiet engine")
-        items = [self.diesel_engine, self.electric_engine]
 
-        self.agent_1 = ArgumentAgent(
-            self.next_id(), self, "Alice", Preferences.generate_random(items)
-        )
-        self.scheduler.add(self.agent_1)
-
-        self.agent_2 = ArgumentAgent(
-            self.next_id(), self, "Bob", Preferences.generate_random(items)
-        )
-        self.scheduler.add(self.agent_2)
+        self.agent_1 = self._create_agent("Alice", prefs_agent_1)
+        self.agent_2 = self._create_agent("Bob", prefs_agent_2)
 
         self.running = True
+
+    def _create_agent(self, name: str, prefs_path: Optional[str]):
+        # Load or generate the preferences depending on if the prefs_path is set
+        items = [self.diesel_engine, self.electric_engine]
+        if prefs_path is None:
+            prefs = Preferences.generate_random(items)
+        else:
+            prefs = Preferences.load(prefs_path, items)
+
+        # Create the agent and add it to the scheduler
+        agent = ArgumentAgent(self.next_id(), self, name, prefs)
+        self.scheduler.add(agent)
+
+        return agent
 
     def step(self):
         self.__messages_service.dispatch_messages()
@@ -57,7 +66,9 @@ class ArgumentModel(Model):
 
 
 if __name__ == "__main__":
-    argument_model = ArgumentModel()
+    argument_model = ArgumentModel(
+        prefs_agent_1="data/agent_1", prefs_agent_2="data/agent_2"
+    )
 
     # To be completed 
     argument_model.agent_1.send_message(
