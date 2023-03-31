@@ -4,7 +4,7 @@ from mesa.time import RandomActivation
 
 from communication.agent.CommunicatingAgent import CommunicatingAgent
 from communication.message.MessageService import MessageService
-from communication.message.Message import Message
+from communication.message.Message import Message, BROADCAST
 from communication.message.MessagePerformative import MessagePerformative
 from communication.preferences.Preferences import Preferences
 from communication.preferences.CriterionName import CriterionName
@@ -20,10 +20,34 @@ class ArgumentAgent(CommunicatingAgent):
         self, unique_id: int, model: Model, name: str, preferences: Preferences
     ):
         super().__init__(unique_id, model, name)
+        self.init_prop = False
         self.preferences = preferences
 
     def step(self):
         super().step()
+        if(self.get_name() == "Alice"):
+            if(self.init_prop == False):
+                self.init_prop = True
+                self.send_message(
+                    Message(self.get_name(), None, MessagePerformative.PROPOSE, argument_model.diesel_engine)
+                )
+            else:
+                messages = self.get_new_messages()
+                if(len(messages) > 0):
+                    print(*messages, sep='\n')
+
+            return
+
+        if(self.get_name() == "Bob"):
+            messages = self.get_new_messages()
+            if(len(messages) > 0):
+                print(*messages, sep='\n')
+
+            for msg in messages:
+                if(msg.get_performative() == MessagePerformative.PROPOSE):
+                    self.send_message(
+                        Message(self.get_name(), msg.get_exp(), MessagePerformative.ACCEPT, msg.get_content())
+                    )
 
     def get_preferences(self):
         return self.preferences
@@ -64,25 +88,13 @@ class ArgumentModel(Model):
         self.__messages_service.dispatch_messages()
         self.scheduler.step()
 
+    def run_steps(self, steps : int = 5):
+        for _ in range(steps):
+            self.step()
 
 if __name__ == "__main__":
     argument_model = ArgumentModel(
         prefs_agent_1="data/agent_1", prefs_agent_2="data/agent_2"
     )
-
-    # To be completed 
-    argument_model.agent_1.send_message(
-        Message(argument_model.agent_1.get_name(), argument_model.agent_2.get_name(), MessagePerformative.PROPOSE, argument_model.diesel_engine)
-        )
-
-    print(*argument_model.agent_2.get_new_messages(), sep='\n')
+    argument_model.run_steps()
     
-    argument_model.step()
-    argument_model.agent_2.send_message(
-        Message(argument_model.agent_2.get_name(), argument_model.agent_1.get_name(), MessagePerformative.ACCEPT, argument_model.diesel_engine)
-        )
-    
-    print(*argument_model.agent_1.get_new_messages(), sep='\n')
-
- 
-
