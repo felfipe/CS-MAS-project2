@@ -4,6 +4,10 @@ from mesa.time import RandomActivation
 from communication.agent.CommunicatingAgent import CommunicatingAgent
 from communication.message.MessageService import MessageService
 from communication.preferences.Preferences import Preferences
+from communication.preferences.CriterionName import CriterionName
+from communication.preferences.CriterionValue import CriterionValue
+from communication.preferences.Item import Item
+from communication.preferences.Value import Value
 
 
 class ArgumentAgent(CommunicatingAgent):
@@ -13,39 +17,41 @@ class ArgumentAgent(CommunicatingAgent):
         self, unique_id: int, model: Model, name: str, preferences: Preferences
     ):
         super().__init__(unique_id, model, name)
-        self.preference = preferences
+        self.preferences = preferences
 
     def step(self):
         super().step()
 
-    def get_preference(self):
-        return self.preference
-
-    def generate_preferences(self, list_items):
-        # see question
-        # To be completed
-        pass
+    def get_preferences(self):
+        return self.preferences
 
 
 class ArgumentModel(Model):
     """ArgumentModel which inherit from Model"""
 
     def __init__(self):
-        self.schedule = RandomActivation(self)
-        self.__messages_service = MessageService(self.schedule)
+        self.scheduler = RandomActivation(self)
+        self.__messages_service = MessageService(self.scheduler)
 
-        # To be completed
-        #
-        # a = ArgumentAgent(id , "agent_name ")
-        # a. generate_preferences (preferences)
-        # self.schedule.add(a)
-        # ...
+        self.diesel_engine = Item("ICED", "A super cool diesel engine")
+        self.electric_engine = Item("E", "A very quiet engine")
+        items = [self.diesel_engine, self.electric_engine]
+
+        self.agent_1 = ArgumentAgent(
+            self.next_id(), self, "Alice", Preferences.generate_random(items)
+        )
+        self.scheduler.add(self.agent_1)
+
+        self.agent_2 = ArgumentAgent(
+            self.next_id(), self, "Bob", Preferences.generate_random(items)
+        )
+        self.scheduler.add(self.agent_2)
 
         self.running = True
 
     def step(self):
         self.__messages_service.dispatch_messages()
-        self.schedule.step()
+        self.scheduler.step()
 
 
 if __name__ == "__main__":
