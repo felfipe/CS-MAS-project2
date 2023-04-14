@@ -22,7 +22,10 @@ class ArgumentModel(Model):
         super().__init__()
         self.scheduler = RandomActivation(self)
         self.__messages_service = MessageService(self.scheduler)
-        self.items = [Item("ICED", "A super cool diesel engine"), Item("E", "A very quiet engine")]
+        self.items = [
+            Item("ICED", "A super cool diesel engine"),
+            Item("E", "A very quiet engine"),
+        ]
 
         self.agent_1 = self._create_agent("Alice", prefs_agent_1)
         self.agent_2 = self._create_agent("Bob", prefs_agent_2)
@@ -46,15 +49,22 @@ class ArgumentModel(Model):
         self.__messages_service.dispatch_messages()
         self.scheduler.step()
 
-    def run_steps(self, steps : int = 5):
+    def run_steps(self, steps: int = 5):
         for _ in range(steps):
             self.step()
+
 
 class ArgumentAgent(CommunicatingAgent):
     """ArgumentAgent which inherit from CommunicatingAgent"""
 
+    model: ArgumentModel
+
     def __init__(
-        self, unique_id: int, model: ArgumentModel, name: str, preferences: Preferences
+        self,
+        unique_id: int,
+        model: ArgumentModel,
+        name: str,
+        preferences: Preferences,
     ):
         super().__init__(unique_id, model, name)
         self.init_prop = False
@@ -66,24 +76,39 @@ class ArgumentAgent(CommunicatingAgent):
         super().step()
 
         messages = self.get_new_messages()
-        if(len(messages) > 0):
-            print(*messages, sep='\n')
+        if len(messages) > 0:
+            print(*messages, sep="\n")
 
-
-        if(self.get_name() == "Alice" and self.init_prop == False):
+        if self.get_name() == "Alice" and not self.init_prop:
             self.init_prop = True
             self.send_message(
-                Message(self.get_name(), None, MessagePerformative.PROPOSE, self.proposed_item)
+                Message(
+                    self.get_name(),
+                    None,
+                    MessagePerformative.PROPOSE,
+                    self.proposed_item,
                 )
+            )
             return
 
-        if(self.get_name() == "Alice"):
+        if self.get_name() == "Alice":
             for msg in messages:
-                if msg.get_performative() == MessagePerformative.ACCEPT and msg.get_content() == self.proposed_item:
+                if (
+                    msg.get_performative() == MessagePerformative.ACCEPT
+                    and msg.get_content() == self.proposed_item
+                ):
                     self.send_message(
-                        Message(self.get_name(), None, MessagePerformative.COMMIT, self.proposed_item)
+                        Message(
+                            self.get_name(),
+                            None,
+                            MessagePerformative.COMMIT,
+                            self.proposed_item,
+                        )
                     )
-                elif msg.get_performative() == MessagePerformative.COMMIT and msg.get_content() == self.proposed_item:
+                elif (
+                    msg.get_performative() == MessagePerformative.COMMIT
+                    and msg.get_content() == self.proposed_item
+                ):
                     self.items.remove(self.proposed_item)
                 else:
                     self.send_message(
@@ -92,29 +117,48 @@ class ArgumentAgent(CommunicatingAgent):
 
             return
 
-        if(self.get_name() == "Bob"):
+        if self.get_name() == "Bob":
             for msg in messages:
-                if(msg.get_performative() == MessagePerformative.PROPOSE):
+                if msg.get_performative() == MessagePerformative.PROPOSE:
                     self.received_proposal = msg.get_content()
-                    if(self.preferences.is_item_among_top_10_percent(self.proposed_item, self.items)):
+                    if self.preferences.is_item_among_top_10_percent(
+                        self.proposed_item, self.items
+                    ):
                         self.send_message(
-                            Message(self.get_name(), msg.get_exp(), MessagePerformative.ACCEPT, self.proposed_item)
+                            Message(
+                                self.get_name(),
+                                msg.get_exp(),
+                                MessagePerformative.ACCEPT,
+                                self.proposed_item,
+                            )
                         )
                     else:
                         self.send_message(
-                            Message(self.get_name(), msg.get_exp(), MessagePerformative.ASK_WHY, self.proposed_item)
+                            Message(
+                                self.get_name(),
+                                msg.get_exp(),
+                                MessagePerformative.ASK_WHY,
+                                self.proposed_item,
+                            )
                         )
-                elif(msg.get_performative() == MessagePerformative.COMMIT and msg.get_content() == self.received_proposal):
+                elif (
+                    msg.get_performative() == MessagePerformative.COMMIT
+                    and msg.get_content() == self.received_proposal
+                ):
                     self.items.remove(self.received_proposal)
                     self.send_message(
-                        Message(self.get_name(), None, MessagePerformative.COMMIT, self.received_proposal)
+                        Message(
+                            self.get_name(),
+                            None,
+                            MessagePerformative.COMMIT,
+                            self.received_proposal,
                         )
+                    )
                 else:
                     self.send_message(
                         Message(self.get_name(), None, MessagePerformative.ARGUE, None)
-                        )
+                    )
                 return
-
 
     def get_preferences(self):
         return self.preferences
@@ -125,4 +169,3 @@ if __name__ == "__main__":
         prefs_agent_1="data/agent_1", prefs_agent_2="data/agent_2"
     )
     argument_model.run_steps()
-    
