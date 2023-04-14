@@ -22,3 +22,8 @@ class CoupleValue:
 
     def __str__(self) -> str:
         return self.criterion_name.name + "=" + self.value.name
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, CoupleValue):
+            return NotImplemented
+        return self.criterion_name == other.criterion_name and self.value == other.value

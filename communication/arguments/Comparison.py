@@ -25,3 +25,11 @@ class Comparison:
 
     def __str__(self) -> str:
         return self.better_criterion_name.name + ">" + self.worse_criterion_name.name
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Comparison):
+            return NotImplemented
+        return (
+            self.better_criterion_name == other.better_criterion_name
+            and self.worse_criterion_name == other.worse_criterion_name
+        )
