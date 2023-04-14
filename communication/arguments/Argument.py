@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, List, Optional
 if TYPE_CHECKING:
     from ..preferences.CriterionName import CriterionName
     from ..preferences.Item import Item
+    from ..preferences.Preferences import Preferences
     from ..preferences.Value import Value
     from .Comparison import Comparison
     from .CoupleValue import CoupleValue
@@ -56,3 +57,44 @@ class Argument:
         prefix = "" if self.decision else "not "
         premises = self.couple_values + self.comparisons
         return f"{prefix}{self.item.get_name()} <- " + ", ".join(map(str, premises))
+
+    @staticmethod
+    def get_supporting_premises(
+        item: "Item", preferences: "Preferences"
+    ) -> List["CoupleValue"]:
+        """Generates a list of premisses which can be used to support an item
+
+        params:
+            item (Item): name of the item
+        returns:
+            list of all premisses PRO an item (sorted by order of importance
+            based on agent's preferences)
+        """
+        prems = []
+        for criterion_name in preferences.get_criterion_name_list():
+            value = preferences.get_value(item, criterion_name)
+            if value.value >= Value.GOOD.value:
+                prems.append(CoupleValue(criterion_name, value))
+
+        return prems
+
+    @staticmethod
+    def get_attacking_premises(
+        item: "Item", preferences: "Preferences"
+    ) -> List["CoupleValue"]:
+        """Generates a list of premisses which can be used to attack an item
+
+        params:
+            item (Item): name of the item
+        returns:
+            list of all premisses CON an item (sorted by order of importance
+            based on agent's preferences)
+        """
+
+        prems = []
+        for criterion_name in preferences.get_criterion_name_list():
+            value = preferences.get_value(item, criterion_name)
+            if value.value <= Value.BAD.value:
+                prems.append(CoupleValue(criterion_name, value))
+
+        return prems

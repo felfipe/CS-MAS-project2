@@ -28,43 +28,8 @@ class ArgumentAgent(CommunicatingAgent):
     def step(self):
         super().step()
 
-    def get_preferences(self):
+    def get_preferences(self) -> Preferences:
         return self.preferences
-
-    def get_supporting_premises(self, item: "Item") -> List["CoupleValue"]:
-        """Generates a list of premisses which can be used to support an item
-
-        params:
-            item (Item): name of the item
-        returns:
-            list of all premisses PRO an item (sorted by order of importance
-            based on agent's preferences)
-        """
-        prems = []
-        for criterion_name in self.preferences.get_criterion_name_list():
-            value = self.preferences.get_value(item, criterion_name)
-            if value.value >= Value.GOOD.value:
-                prems.append(CoupleValue(criterion_name, value))
-
-        return prems
-
-    def get_attacking_premises(self, item: "Item") -> List["CoupleValue"]:
-        """Generates a list of premisses which can be used to attack an item
-
-        params:
-            item (Item): name of the item
-        returns:
-            list of all premisses CON an item (sorted by order of importance
-            based on agent's preferences)
-        """
-
-        prems = []
-        for criterion_name in self.preferences.get_criterion_name_list():
-            value = self.preferences.get_value(item, criterion_name)
-            if value.value <= Value.BAD.value:
-                prems.append(CoupleValue(criterion_name, value))
-
-        return prems
 
     def support_proposal(self, item: Item) -> Argument:
         """Used when the agent receives "ASK_WHY" after having proposed an item
@@ -74,8 +39,9 @@ class ArgumentAgent(CommunicatingAgent):
         returns:
             string - the strongest supportive argument
         """
-        premises = self.get_supporting_premises(item)
-        return Argument(item, decision=True, couple_values=[premises[0]])
+        premises = Argument.get_supporting_premises(item, self.preferences)
+        strongest_argument = premises[0]
+        return Argument(item, decision=True, couple_values=[strongest_argument])
 
 
 class ArgumentModel(Model):
@@ -119,19 +85,26 @@ if __name__ == "__main__":
         prefs_agent_1="data/agent_1", prefs_agent_2="data/agent_2"
     )
 
-    # To be completed 
+    # To be completed
     argument_model.agent_1.send_message(
-        Message(argument_model.agent_1.get_name(), argument_model.agent_2.get_name(), MessagePerformative.PROPOSE, argument_model.diesel_engine)
+        Message(
+            argument_model.agent_1.get_name(),
+            argument_model.agent_2.get_name(),
+            MessagePerformative.PROPOSE,
+            argument_model.diesel_engine,
         )
+    )
 
-    print(*argument_model.agent_2.get_new_messages(), sep='\n')
-    
+    print(*argument_model.agent_2.get_new_messages(), sep="\n")
+
     argument_model.step()
     argument_model.agent_2.send_message(
-        Message(argument_model.agent_2.get_name(), argument_model.agent_1.get_name(), MessagePerformative.ACCEPT, argument_model.diesel_engine)
+        Message(
+            argument_model.agent_2.get_name(),
+            argument_model.agent_1.get_name(),
+            MessagePerformative.ACCEPT,
+            argument_model.diesel_engine,
         )
-    
-    print(*argument_model.agent_1.get_new_messages(), sep='\n')
+    )
 
- 
-
+    print(*argument_model.agent_1.get_new_messages(), sep="\n")
