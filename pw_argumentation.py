@@ -35,7 +35,7 @@ class ArgumentModel(Model):
 
         self.running = True
 
-    def _create_agent(self, name: str, prefs_path: Optional[str], initial_agent : bool):
+    def _create_agent(self, name: str, prefs_path: Optional[str], initial_agent: bool):
         # Load or generate the preferences depending on if the prefs_path is set
         if prefs_path is None:
             prefs = Preferences.generate_random(self.items)
@@ -68,7 +68,7 @@ class ArgumentAgent(CommunicatingAgent):
         model: ArgumentModel,
         name: str,
         preferences: Preferences,
-        initial_agent: bool
+        initial_agent: bool,
     ):
         super().__init__(unique_id, model, name)
         self.preferences = preferences
@@ -100,29 +100,28 @@ class ArgumentAgent(CommunicatingAgent):
             return
 
         for msg in messages:
-
             if msg.get_performative() == MessagePerformative.PROPOSE:
-                    self.received_proposition = msg.get_content()
-                    if self.preferences.is_item_among_top_10_percent(
-                        self.received_proposition, self.items
-                    ):
-                        self.send_message(
-                            Message(
-                                self.get_name(),
-                                msg.get_exp(),
-                                MessagePerformative.ACCEPT,
-                                self.received_proposition,
-                            )
+                self.received_proposition = msg.get_content()
+                if self.preferences.is_item_among_top_10_percent(
+                    self.received_proposition, self.items
+                ):
+                    self.send_message(
+                        Message(
+                            self.get_name(),
+                            msg.get_exp(),
+                            MessagePerformative.ACCEPT,
+                            self.received_proposition,
                         )
-                    else:
-                        self.send_message(
-                            Message(
-                                self.get_name(),
-                                msg.get_exp(),
-                                MessagePerformative.ASK_WHY,
-                                self.received_proposition,
-                            )
+                    )
+                else:
+                    self.send_message(
+                        Message(
+                            self.get_name(),
+                            msg.get_exp(),
+                            MessagePerformative.ASK_WHY,
+                            self.received_proposition,
                         )
+                    )
             elif (
                 msg.get_performative() == MessagePerformative.ACCEPT
                 and msg.get_content() == self.proposed_item
@@ -136,13 +135,11 @@ class ArgumentAgent(CommunicatingAgent):
                     )
                 )
                 self.has_committed = True
-                
-            elif (
-                msg.get_performative() == MessagePerformative.COMMIT
-            ):
-                if(msg.get_content() == self.proposed_item and self.has_committed):
+
+            elif msg.get_performative() == MessagePerformative.COMMIT:
+                if msg.get_content() == self.proposed_item and self.has_committed:
                     self.items.remove(self.proposed_item)
-                elif(msg.get_content() == self.received_proposition):
+                elif msg.get_content() == self.received_proposition:
                     self.items.remove(self.received_proposition)
                     self.send_message(
                         Message(
@@ -153,7 +150,7 @@ class ArgumentAgent(CommunicatingAgent):
                         )
                     )
                     self.has_committed = True
-            elif(msg.get_performative() == MessagePerformative.ASK_WHY):
+            elif msg.get_performative() == MessagePerformative.ASK_WHY:
                 self.send_message(
                     Message(self.get_name(), None, MessagePerformative.ARGUE, None)
                 )
