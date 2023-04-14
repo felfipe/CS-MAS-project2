@@ -70,13 +70,17 @@ class Argument:
             list of all premisses PRO an item (sorted by order of importance
             based on agent's preferences)
         """
-        prems = []
+        val_and_prem = []
         for criterion_name in preferences.get_criterion_name_list():
             value = preferences.get_value(item, criterion_name)
             if value.value >= Value.GOOD.value:
-                prems.append(CoupleValue(criterion_name, value))
+                val_and_prem.append((value.value, CoupleValue(criterion_name, value)))
 
-        return prems
+        # Sort from most important to least important
+        val_and_prem.sort(key=lambda vp: vp[0], reverse=True)
+
+        # Return only the premises
+        return [vp[1] for vp in val_and_prem]
 
     @staticmethod
     def get_attacking_premises(
@@ -91,10 +95,66 @@ class Argument:
             based on agent's preferences)
         """
 
-        prems = []
+        val_and_prem = []
         for criterion_name in preferences.get_criterion_name_list():
             value = preferences.get_value(item, criterion_name)
             if value.value <= Value.BAD.value:
-                prems.append(CoupleValue(criterion_name, value))
+                val_and_prem.append((value.value, CoupleValue(criterion_name, value)))
 
-        return prems
+        # Sort from most important to least important
+        val_and_prem.sort(key=lambda vp: vp[0], reverse=False)
+
+        # Return only the premises
+        return [vp[1] for vp in val_and_prem]
+
+
+if __name__ == "__main__":
+    """Testing the Argument class."""
+    from ..preferences.CriterionName import CriterionName  # noqa
+    from ..preferences.CriterionValue import CriterionValue  # noqa
+    from ..preferences.Item import Item  # noqa
+    from ..preferences.Preferences import Preferences  # noqa
+    from ..preferences.Value import Value  # noqa
+    from .CoupleValue import CoupleValue  # noqa
+
+    agent_pref = Preferences()
+    agent_pref.set_criterion_name_list(
+        [
+            CriterionName.PRODUCTION_COST,
+            CriterionName.ENVIRONMENT_IMPACT,
+            CriterionName.CONSUMPTION,
+            CriterionName.DURABILITY,
+            CriterionName.NOISE,
+        ]
+    )
+
+    diesel_engine = Item("Diesel Engine", "A super cool diesel engine")
+    agent_pref.add_criterion_value(
+        CriterionValue(diesel_engine, CriterionName.PRODUCTION_COST, Value.VERY_GOOD)
+    )
+    agent_pref.add_criterion_value(
+        CriterionValue(diesel_engine, CriterionName.CONSUMPTION, Value.GOOD)
+    )
+    agent_pref.add_criterion_value(
+        CriterionValue(diesel_engine, CriterionName.DURABILITY, Value.VERY_GOOD)
+    )
+    agent_pref.add_criterion_value(
+        CriterionValue(diesel_engine, CriterionName.ENVIRONMENT_IMPACT, Value.BAD)
+    )
+    agent_pref.add_criterion_value(
+        CriterionValue(diesel_engine, CriterionName.NOISE, Value.VERY_BAD)
+    )
+
+    supporting_premises = Argument.get_supporting_premises(diesel_engine, agent_pref)
+    supporting_premises_names = [p.criterion_name for p in supporting_premises]
+    assert supporting_premises_names == [
+        CriterionName.PRODUCTION_COST,
+        CriterionName.DURABILITY,
+        CriterionName.CONSUMPTION,
+    ]
+    attacking_premises = Argument.get_attacking_premises(diesel_engine, agent_pref)
+    attacking_premises_names = [p.criterion_name for p in attacking_premises]
+    assert attacking_premises_names == [
+        CriterionName.NOISE,
+        CriterionName.ENVIRONMENT_IMPACT,
+    ]
