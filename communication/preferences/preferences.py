@@ -269,8 +269,8 @@ if __name__ == "__main__":
     # Ensure ICED is the first item for the remainder of the tests
     if items[0].get_name() == "E":
         items.reverse()
-    assert p.get_value(items[0], CriterionName.CONSUMPTION) == Value.AVERAGE
-    assert p.get_value(items[1], CriterionName.ENVIRONMENT_IMPACT) == Value.GOOD
+    assert p.get_value(items[0], CriterionName.CONSUMPTION) == Value.GOOD
+    assert p.get_value(items[1], CriterionName.ENVIRONMENT_IMPACT) == Value.VERY_GOOD
 
     # Test reading preferences from csv for agent 2
     old_items = items.copy()
@@ -284,6 +284,6 @@ if __name__ == "__main__":
     ]
     assert items == old_items, "Existing items should not be replaced"
     assert p.get_value(items[0], CriterionName.CONSUMPTION) == Value.BAD
-    assert p.get_value(items[1], CriterionName.ENVIRONMENT_IMPACT) == Value.GOOD
+    assert p.get_value(items[1], CriterionName.ENVIRONMENT_IMPACT) == Value.VERY_GOOD
 
     print("read_value_from_csv OK")
