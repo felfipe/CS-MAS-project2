@@ -1,19 +1,20 @@
-from typing import Optional, List
+from typing import Optional
+
 from mesa import Model
 from mesa.time import RandomActivation
 
 from communication.agent.CommunicatingAgent import CommunicatingAgent
-from communication.message.MessageService import MessageService
-from communication.message.Message import Message, BROADCAST
+from communication.arguments.Argument import Argument
+from communication.arguments.Comparison import Comparison
+from communication.arguments.CoupleValue import CoupleValue
+from communication.message.Message import BROADCAST, Message
 from communication.message.MessagePerformative import MessagePerformative
-from communication.preferences.Preferences import Preferences
+from communication.message.MessageService import MessageService
 from communication.preferences.CriterionName import CriterionName
 from communication.preferences.CriterionValue import CriterionValue
 from communication.preferences.Item import Item
+from communication.preferences.Preferences import Preferences
 from communication.preferences.Value import Value
-from communication.arguments.CoupleValue import CoupleValue
-from communication.arguments.Comparison import Comparison
-from communication.arguments.Argument import Argument
 
 
 class ArgumentModel(Model):
@@ -75,7 +76,7 @@ class ArgumentAgent(CommunicatingAgent):
         self.items = self.model.items.copy()
 
         self.initial_agent = initial_agent
-        self.proposed_item = self.items[1]
+        self.proposed_item = self.preferences.most_preferred(self.items)
 
         self.has_committed = False
         self.has_proposed = False
@@ -152,10 +153,13 @@ class ArgumentAgent(CommunicatingAgent):
                     self.has_committed = True
             elif msg.get_performative() == MessagePerformative.ASK_WHY:
                 self.send_message(
-                    Message(self.get_name(), None, MessagePerformative.ARGUE, None)
+                    Message(
+                        self.get_name(),
+                        None,
+                        MessagePerformative.ARGUE,
+                        self.support_proposal(self.proposed_item),
+                    )
                 )
-
-            return
 
     def get_preferences(self) -> Preferences:
         return self.preferences
