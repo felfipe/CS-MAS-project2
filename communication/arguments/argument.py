@@ -2,12 +2,12 @@
 
 from typing import List, Optional
 
-from ..preferences.CriterionName import CriterionName
-from ..preferences.Item import Item
-from ..preferences.Preferences import Preferences
-from ..preferences.Value import Value
-from .Comparison import Comparison
-from .CoupleValue import CoupleValue
+from ..preferences.criterion_name import CriterionName
+from ..preferences.item import Item
+from ..preferences.preferences import Preferences
+from ..preferences.values import Value
+from .comparison import Comparison
+from .equality import Equality
 
 
 class Argument:
@@ -16,8 +16,8 @@ class Argument:
     attr:
         item: the item concerned
         decision: whether the item should be accepted
-        comparisons: a list of Comparisons
-        couple_values: a list of CoupleValues
+        comparisons: a list of Comparison's
+        equalities: a list of Equality's
     """
 
     def __init__(
@@ -25,42 +25,40 @@ class Argument:
         item: "Item",
         decision: bool,
         comparisons: Optional[List["Comparison"]] = None,
-        couple_values: Optional[List["CoupleValue"]] = None,
+        equalities: Optional[List["Equality"]] = None,
     ) -> None:
         """Create a new Argument."""
         if comparisons is None:
             comparisons = []
-        if couple_values is None:
-            couple_values = []
+        if equalities is None:
+            equalities = []
 
         self.item = item
         self.decision = decision
         self.comparisons = comparisons
-        self.couple_values = couple_values
+        self.equalities = equalities
 
     def add_premise_comparison(
         self,
         better_criterion_name: "CriterionName",
         worse_criterion_name: "CriterionName",
     ):
-        """Adds a premiss comparison in the comparison list"""
+        """Adds a comparison premise in the comparison list"""
         self.comparisons.append(Comparison(better_criterion_name, worse_criterion_name))
 
-    def add_premise_couple_values(
-        self, criterion_name: "CriterionName", value: "Value"
-    ):
-        """Add a premiss couple values in the couple values list"""
-        self.couple_values.append(CoupleValue(criterion_name, value))
+    def add_premise_equality(self, criterion_name: "CriterionName", value: "Value"):
+        """Adds an equality premise in the equalities list"""
+        self.equalities.append(Equality(criterion_name, value))
 
     def __str__(self) -> str:
         prefix = "" if self.decision else "not "
-        premises = self.couple_values + self.comparisons
+        premises = self.equalities + self.comparisons
         return f"{prefix}{self.item.get_name()} <- " + ", ".join(map(str, premises))
 
     @staticmethod
     def get_supporting_premises(
         item: "Item", preferences: "Preferences"
-    ) -> List["CoupleValue"]:
+    ) -> List["Equality"]:
         """Generates a list of premisses which can be used to support an item
 
         params:
@@ -73,14 +71,14 @@ class Argument:
         for criterion_name in preferences.get_criterion_name_list():
             value = preferences.get_value(item, criterion_name)
             if value.value >= Value.GOOD.value:
-                prems.append(CoupleValue(criterion_name, value))
+                prems.append(Equality(criterion_name, value))
 
         return prems
 
     @staticmethod
     def get_attacking_premises(
         item: "Item", preferences: "Preferences"
-    ) -> List["CoupleValue"]:
+    ) -> List["Equality"]:
         """Generates a list of premisses which can be used to attack an item
 
         params:
@@ -94,7 +92,7 @@ class Argument:
         for criterion_name in preferences.get_criterion_name_list():
             value = preferences.get_value(item, criterion_name)
             if value.value <= Value.BAD.value:
-                prems.append(CoupleValue(criterion_name, value))
+                prems.append(Equality(criterion_name, value))
 
         return prems
 
@@ -127,12 +125,12 @@ class Argument:
         # Parse the premises
         # Format: NAME=VALUE | NAME>NAME
         comparisons = []
-        couple_values = []
+        equalities = []
         for premise in raw_premises.split(","):
             if "=" in premise:
                 name, value = premise.split("=")
-                couple_values.append(
-                    CoupleValue(
+                equalities.append(
+                    Equality(
                         criterion_name=CriterionName[name.strip()],
                         value=Value[value.strip()],
                     )
@@ -149,7 +147,7 @@ class Argument:
                 msg = f'Invalid premise "{premise}" in argument "{raw}"'
                 raise ValueError(msg)
 
-        return Argument(item, decision, comparisons, couple_values)
+        return Argument(item, decision, comparisons, equalities)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Argument):
@@ -159,13 +157,13 @@ class Argument:
             self.item == other.item
             and self.decision == other.decision
             and self.comparisons == other.comparisons
-            and self.couple_values == other.couple_values
+            and self.equalities == other.equalities
         )
 
 
 if __name__ == "__main__":
     """Testing the Argument class."""
-    from ..preferences.CriterionValue import CriterionValue
+    from ..preferences.criterion_value import CriterionValue
 
     agent_pref = Preferences()
     agent_pref.set_criterion_name_list(
@@ -196,13 +194,13 @@ if __name__ == "__main__":
     )
 
     assert Argument.get_supporting_premises(diesel_engine, agent_pref) == [
-        CoupleValue(CriterionName.DURABILITY, Value.VERY_GOOD),
-        CoupleValue(CriterionName.CONSUMPTION, Value.GOOD),
-        CoupleValue(CriterionName.PRODUCTION_COST, Value.VERY_GOOD),
+        Equality(CriterionName.DURABILITY, Value.VERY_GOOD),
+        Equality(CriterionName.CONSUMPTION, Value.GOOD),
+        Equality(CriterionName.PRODUCTION_COST, Value.VERY_GOOD),
     ]
     assert Argument.get_attacking_premises(diesel_engine, agent_pref) == [
-        CoupleValue(CriterionName.ENVIRONMENT_IMPACT, Value.BAD),
-        CoupleValue(CriterionName.NOISE, Value.VERY_BAD),
+        Equality(CriterionName.ENVIRONMENT_IMPACT, Value.BAD),
+        Equality(CriterionName.NOISE, Value.VERY_BAD),
     ]
 
     argument = Argument(
@@ -212,7 +210,7 @@ if __name__ == "__main__":
             Comparison(CriterionName.CONSUMPTION, CriterionName.DURABILITY),
             Comparison(CriterionName.ENVIRONMENT_IMPACT, CriterionName.PRODUCTION_COST),
         ],
-        couple_values=[CoupleValue(CriterionName.DURABILITY, Value.GOOD)],
+        equalities=[Equality(CriterionName.DURABILITY, Value.GOOD)],
     )
     parsed_argument = Argument.parse(
         str(argument), {diesel_engine.get_name(): diesel_engine}

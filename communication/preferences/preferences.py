@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 
-import os
-from typing import List
-import random
 import math
+import os
+import random
+from typing import List
+
 import pandas as pd
 
-from .CriterionName import CriterionName
-from .CriterionValue import CriterionValue
-from .Item import Item
-from .Value import Value
+from .criterion_name import CriterionName
+from .criterion_value import CriterionValue
+from .item import Item
+from .values import Value
 
 
 class Preferences:
@@ -111,7 +112,8 @@ class Preferences:
                 and value.get_criterion_name() == criterion_name
             ):
                 return value.get_value()
-        raise ValueError(f"No value found for {item=} {criterion_name=}")
+        msg = f"No value found for {item=} {criterion_name=}"
+        raise ValueError(msg)
 
     def is_preferred_criterion(
         self, criterion_name_1: CriterionName, criterion_name_2: CriterionName
@@ -122,7 +124,8 @@ class Preferences:
                 return True
             if criterion_name == criterion_name_2:
                 return False
-        raise ValueError(f"Criteria not found: {criterion_name_1, criterion_name_2}")
+        msg = f"Criteria not found: {criterion_name_1, criterion_name_2}"
+        raise ValueError(msg)
 
     def is_preferred_item(self, item_1: Item, item_2: Item) -> bool:
         """Returns if the item 1 is preferred to the item 2."""
@@ -233,9 +236,7 @@ if __name__ == "__main__":
             electric_engine.get_score(agent_pref)
         )
     )
-    print(
-        "Diesel Engine (for agent 1) = {}".format(diesel_engine.get_score(agent_pref))
-    )
+    print(f"Diesel Engine (for agent 1) = {diesel_engine.get_score(agent_pref)}")
     print(
         "Most preferred item is : {}".format(
             agent_pref.most_preferred([diesel_engine, electric_engine]).get_name()

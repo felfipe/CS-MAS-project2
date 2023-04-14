@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 
-from typing import Any
-from typing import Optional
-from .MessagePerformative import MessagePerformative
+from typing import TYPE_CHECKING, Any, Optional
+
+if TYPE_CHECKING:
+    from .message_performative import MessagePerformative
 
 BROADCAST = None
+
+
 class Message:
     """Message class.
     Class implementing the message object which is exchanged between agents through
@@ -12,7 +15,7 @@ class Message:
 
     attr:
         from_agent: the sender of the message (id)
-        to_agent: the receiver of the message (id)
+        to_agent: the receiver of the message (id). If null, broadcast.
         message_performative: the performative of the message
         content: the content of the message
     """
@@ -21,7 +24,7 @@ class Message:
         self,
         from_agent: str,
         to_agent: Optional[str],
-        message_performative: MessagePerformative,
+        message_performative: "MessagePerformative",
         content: Any,
     ):
         """Create a new message."""
@@ -47,11 +50,11 @@ class Message:
         """Return the sender of the message."""
         return self.__from_agent
 
-    def get_dest(self) -> str:
+    def get_dest(self) -> Optional[str]:
         """Return the receiver of the message."""
         return self.__to_agent
 
-    def get_performative(self) -> MessagePerformative:
+    def get_performative(self) -> "MessagePerformative":
         """Return the performative of the message."""
         return self.__message_performative
 

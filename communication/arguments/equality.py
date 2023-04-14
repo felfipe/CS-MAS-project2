@@ -3,12 +3,12 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..preferences.CriterionName import CriterionName
-    from ..preferences.Value import Value
+    from ..preferences.criterion_name import CriterionName
+    from ..preferences.values import Value
 
 
-class CoupleValue:
-    """This class implements a couple value used in argument object.
+class Equality:
+    """This class implements an equality used in argument object.
 
     attr:
         criterion_name: the criterion
@@ -24,6 +24,6 @@ class CoupleValue:
         return self.criterion_name.name + "=" + self.value.name
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, CoupleValue):
+        if not isinstance(other, Equality):
             return NotImplemented
         return self.criterion_name == other.criterion_name and self.value == other.value

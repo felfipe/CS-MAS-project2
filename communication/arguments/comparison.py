@@ -3,7 +3,7 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..preferences.CriterionName import CriterionName
+    from ..preferences.criterion_name import CriterionName
 
 
 class Comparison:

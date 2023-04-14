@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
 
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from ..agent.CommunicatingAgent import CommunicatingAgent
     from mesa.time import BaseScheduler
-from .Message import Message
+
+    from ..agent.communicating_agent import CommunicatingAgent
+from .message import Message
 
 
 class MessageService:
@@ -21,6 +22,7 @@ class MessageService:
         scheduler: the scheduler of the sma (Scheduler)
         messages_to_proceed: the list of message to proceed mailbox of the agent (list)
     """
+
     __instance: Optional["MessageService"] = None
 
     @staticmethod
@@ -34,7 +36,8 @@ class MessageService:
     ) -> None:
         """Create a new MessageService object."""
         if MessageService.__instance is not None:
-            raise Exception("This class is a singleton!")
+            msg = "This class is a singleton!"
+            raise Exception(msg)
         else:
             MessageService.__instance = self
             self.__scheduler = scheduler
@@ -55,12 +58,17 @@ class MessageService:
     def dispatch_message(self, message: "Message") -> None:
         """Dispatch the message to the right agent."""
 
-        if(message.get_dest() == None):
-            for agent in self.__scheduler.agents:
+        if message.get_dest() is None:
+            for agent in self.__scheduler.agents:  # type: ignore
                 agent: "CommunicatingAgent"
                 if agent.get_name() == message.get_exp():
                     continue
-                new_message = Message(message.get_exp(), agent.get_name(), message.get_performative(), message.get_content())
+                new_message = Message(
+                    message.get_exp(),
+                    agent.get_name(),
+                    message.get_performative(),
+                    message.get_content(),
+                )
                 agent.receive_message(new_message)
         else:
             self.find_agent_from_name(message.get_dest()).receive_message(message)
@@ -79,4 +87,5 @@ class MessageService:
             agent: "CommunicatingAgent"
             if agent.get_name() == agent_name:
                 return agent
-        raise ValueError(f"No such agent: {agent_name}")
+        msg = f"No such agent: {agent_name}"
+        raise ValueError(msg)

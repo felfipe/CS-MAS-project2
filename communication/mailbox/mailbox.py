@@ -3,8 +3,8 @@
 from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:
-    from ..message.Message import Message
-    from ..message.MessagePerformative import MessagePerformative
+    from ..message.message import Message
+    from ..message.message_performative import MessagePerformative
 
 
 class Mailbox:

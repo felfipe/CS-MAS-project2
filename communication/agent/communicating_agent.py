@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 
-from typing import List
+from typing import TYPE_CHECKING, List
+
 from mesa import Agent, Model
 
-from ..mailbox.Mailbox import Mailbox
-from ..message.MessageService import MessageService
-from ..message.Message import Message
-from ..message.MessagePerformative import MessagePerformative
+from ..mailbox.mailbox import Mailbox
+from ..message.message_service import MessageService
+
+if TYPE_CHECKING:
+    from ..message.message import Message
+    from ..message.message_performative import MessagePerformative
 
 
 class CommunicatingAgent(Agent):
@@ -38,30 +41,30 @@ class CommunicatingAgent(Agent):
         """Return the name of the communicating agent."""
         return self.__name
 
-    def receive_message(self, message: Message) -> None:
+    def receive_message(self, message: "Message") -> None:
         """Receive a message and store it in the mailbox.
 
         Called by the MessageService object."""
         self.__mailbox.receive_messages(message)
 
-    def send_message(self, message: Message) -> None:
+    def send_message(self, message: "Message") -> None:
         """Send message through the MessageService object."""
         self.__messages_service.send_message(message)
 
-    def get_new_messages(self) -> List[Message]:
+    def get_new_messages(self) -> List["Message"]:
         """Return all the unread messages."""
         return self.__mailbox.get_new_messages()
 
-    def get_messages(self) -> List[Message]:
+    def get_messages(self) -> List["Message"]:
         """Return all the received messages."""
         return self.__mailbox.get_messages()
 
     def get_messages_from_performative(
-        self, performative: MessagePerformative
-    ) -> List[Message]:
+        self, performative: "MessagePerformative"
+    ) -> List["Message"]:
         """Return a list of messages which have the same performative."""
         return self.__mailbox.get_messages_from_performative(performative)
 
-    def get_messages_from_exp(self, exp: str) -> List[Message]:
+    def get_messages_from_exp(self, exp: str) -> List["Message"]:
         """Return a list of messages which have the same sender."""
         return self.__mailbox.get_messages_from_exp(exp)

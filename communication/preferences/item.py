@@ -3,9 +3,9 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .CriterionName import CriterionName
-    from .Preferences import Preferences
-    from .Value import Value
+    from .criterion_name import CriterionName
+    from .preferences import Preferences
+    from .values import Value
 
 
 class Item:

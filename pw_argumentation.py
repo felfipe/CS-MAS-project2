@@ -3,18 +3,13 @@ from typing import Optional
 from mesa import Model
 from mesa.time import RandomActivation
 
-from communication.agent.CommunicatingAgent import CommunicatingAgent
-from communication.arguments.Argument import Argument
-from communication.arguments.Comparison import Comparison
-from communication.arguments.CoupleValue import CoupleValue
-from communication.message.Message import BROADCAST, Message
-from communication.message.MessagePerformative import MessagePerformative
-from communication.message.MessageService import MessageService
-from communication.preferences.CriterionName import CriterionName
-from communication.preferences.CriterionValue import CriterionValue
-from communication.preferences.Item import Item
-from communication.preferences.Preferences import Preferences
-from communication.preferences.Value import Value
+from communication.agent.communicating_agent import CommunicatingAgent
+from communication.arguments.argument import Argument
+from communication.message.message import Message
+from communication.message.message_performative import MessagePerformative
+from communication.message.message_service import MessageService
+from communication.preferences.item import Item
+from communication.preferences.preferences import Preferences
 
 
 class ArgumentModel(Model):
@@ -174,7 +169,7 @@ class ArgumentAgent(CommunicatingAgent):
         """
         premises = Argument.get_supporting_premises(item, self.preferences)
         strongest_argument = premises[0]
-        return Argument(item, decision=True, couple_values=[strongest_argument])
+        return Argument(item, decision=True, equalities=[strongest_argument])
 
 
 if __name__ == "__main__":

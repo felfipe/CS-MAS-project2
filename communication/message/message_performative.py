@@ -16,4 +16,4 @@ class MessagePerformative(Enum):
 
     def __str__(self):
         """Returns the name of the enum item."""
-        return "{0}".format(self.name)
+        return f"{self.name}"
