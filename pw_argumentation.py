@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from mesa import Model
 from mesa.time import RandomActivation
 
@@ -11,6 +11,9 @@ from communication.preferences.CriterionName import CriterionName
 from communication.preferences.CriterionValue import CriterionValue
 from communication.preferences.Item import Item
 from communication.preferences.Value import Value
+from communication.arguments.CoupleValue import CoupleValue
+from communication.arguments.Comparison import Comparison
+from communication.arguments.Argument import Argument
 
 
 class ArgumentModel(Model):
@@ -157,8 +160,20 @@ class ArgumentAgent(CommunicatingAgent):
 
             return
 
-    def get_preferences(self):
+    def get_preferences(self) -> Preferences:
         return self.preferences
+
+    def support_proposal(self, item: Item) -> Argument:
+        """Used when the agent receives "ASK_WHY" after having proposed an item
+
+        params:
+            item (str): name of the item which was proposed
+        returns:
+            string - the strongest supportive argument
+        """
+        premises = Argument.get_supporting_premises(item, self.preferences)
+        strongest_argument = premises[0]
+        return Argument(item, decision=True, couple_values=[strongest_argument])
 
 
 if __name__ == "__main__":
