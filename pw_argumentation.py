@@ -150,7 +150,7 @@ class ArgumentAgent(CommunicatingAgent):
                         )
                     )
                     self.has_committed = True
-            else:
+            elif(msg.get_performative() == MessagePerformative.ASK_WHY):
                 self.send_message(
                     Message(self.get_name(), None, MessagePerformative.ARGUE, None)
                 )
