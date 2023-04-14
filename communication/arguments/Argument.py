@@ -195,18 +195,14 @@ if __name__ == "__main__":
         CriterionValue(diesel_engine, CriterionName.NOISE, Value.VERY_BAD)
     )
 
-    supporting_premises = Argument.get_supporting_premises(diesel_engine, agent_pref)
-    supporting_premises_names = [p.criterion_name for p in supporting_premises]
-    assert supporting_premises_names == [
-        CriterionName.DURABILITY,
-        CriterionName.CONSUMPTION,
-        CriterionName.PRODUCTION_COST,
+    assert Argument.get_supporting_premises(diesel_engine, agent_pref) == [
+        CoupleValue(CriterionName.DURABILITY, Value.VERY_GOOD),
+        CoupleValue(CriterionName.CONSUMPTION, Value.GOOD),
+        CoupleValue(CriterionName.PRODUCTION_COST, Value.VERY_GOOD),
     ]
-    attacking_premises = Argument.get_attacking_premises(diesel_engine, agent_pref)
-    attacking_premises_names = [p.criterion_name for p in attacking_premises]
-    assert attacking_premises_names == [
-        CriterionName.ENVIRONMENT_IMPACT,
-        CriterionName.NOISE,
+    assert Argument.get_attacking_premises(diesel_engine, agent_pref) == [
+        CoupleValue(CriterionName.ENVIRONMENT_IMPACT, Value.BAD),
+        CoupleValue(CriterionName.NOISE, Value.VERY_BAD),
     ]
 
     argument = Argument(
