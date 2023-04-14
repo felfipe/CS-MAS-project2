@@ -59,38 +59,62 @@ class ArgumentAgent(CommunicatingAgent):
         super().__init__(unique_id, model, name)
         self.init_prop = False
         self.preferences = preferences
+        self.items = self.model.items.copy()
+        self.proposed_item = self.items[1]
 
     def step(self):
         super().step()
-        if(self.get_name() == "Alice"):
-            if(self.init_prop == False):
-                self.init_prop = True
-                self.send_message(
-                    Message(self.get_name(), None, MessagePerformative.PROPOSE, self.model.items[0])
+
+        messages = self.get_new_messages()
+        if(len(messages) > 0):
+            print(*messages, sep='\n')
+
+
+        if(self.get_name() == "Alice" and self.init_prop == False):
+            self.init_prop = True
+            self.send_message(
+                Message(self.get_name(), None, MessagePerformative.PROPOSE, self.proposed_item)
                 )
-            else:
-                messages = self.get_new_messages()
-                if(len(messages) > 0):
-                    print(*messages, sep='\n')
+            return
+
+        if(self.get_name() == "Alice"):
+            for msg in messages:
+                if msg.get_performative() == MessagePerformative.ACCEPT and msg.get_content() == self.proposed_item:
+                    self.send_message(
+                        Message(self.get_name(), None, MessagePerformative.COMMIT, self.proposed_item)
+                    )
+                elif msg.get_performative() == MessagePerformative.COMMIT and msg.get_content() == self.proposed_item:
+                    self.items.remove(self.proposed_item)
+                else:
+                    self.send_message(
+                        Message(self.get_name(), None, MessagePerformative.ARGUE, None)
+                    )
 
             return
 
         if(self.get_name() == "Bob"):
-            messages = self.get_new_messages()
-            if(len(messages) > 0):
-                print(*messages, sep='\n')
-
             for msg in messages:
                 if(msg.get_performative() == MessagePerformative.PROPOSE):
-                    proposed_item = msg.get_content()
-                    if(self.preferences.is_item_among_top_10_percent(proposed_item, self.model.items)):
+                    self.received_proposal = msg.get_content()
+                    if(self.preferences.is_item_among_top_10_percent(self.proposed_item, self.items)):
                         self.send_message(
-                            Message(self.get_name(), msg.get_exp(), MessagePerformative.ACCEPT, proposed_item)
+                            Message(self.get_name(), msg.get_exp(), MessagePerformative.ACCEPT, self.proposed_item)
                         )
                     else:
                         self.send_message(
-                            Message(self.get_name(), msg.get_exp(), MessagePerformative.ASK_WHY, proposed_item)
+                            Message(self.get_name(), msg.get_exp(), MessagePerformative.ASK_WHY, self.proposed_item)
                         )
+                elif(msg.get_performative() == MessagePerformative.COMMIT and msg.get_content() == self.received_proposal):
+                    self.items.remove(self.received_proposal)
+                    self.send_message(
+                        Message(self.get_name(), None, MessagePerformative.COMMIT, self.received_proposal)
+                        )
+                else:
+                    self.send_message(
+                        Message(self.get_name(), None, MessagePerformative.ARGUE, None)
+                        )
+                return
+
 
     def get_preferences(self):
         return self.preferences
