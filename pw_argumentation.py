@@ -155,6 +155,16 @@ class ArgumentAgent(CommunicatingAgent):
                         self.support_proposal(self.proposed_item),
                     )
                 )
+            elif msg.get_performative() == MessagePerformative.ARGUE:
+                 self.send_message(
+                    Message(
+                        self.get_name(),
+                        None,
+                        MessagePerformative.ARGUE,
+                        self.support_proposal(self.proposed_item),
+                    )
+                )
+
 
     def get_preferences(self) -> Preferences:
         return self.preferences
