@@ -21,10 +21,7 @@ class ArgumentModel(Model):
         super().__init__()
         self.scheduler = RandomActivation(self)
         self.__messages_service = MessageService(self.scheduler)
-        self.items = [
-            Item("ICED", "A super cool diesel engine"),
-            Item("E", "A very quiet engine"),
-        ]
+        self.items = { "ICED" : Item("ICED", "A super cool diesel engine"), "E" : Item("E", "A very quiet engine")}
 
         self.agent_1 = self._create_agent("Alice", prefs_agent_1, True)
         self.agent_2 = self._create_agent("Bob", prefs_agent_2, False)
@@ -90,14 +87,14 @@ class ArgumentAgent(CommunicatingAgent):
                     self.get_name(),
                     None,
                     MessagePerformative.PROPOSE,
-                    self.proposed_item,
+                    self.proposed_item.get_name(),
                 )
             )
             return
 
         for msg in messages:
             if msg.get_performative() == MessagePerformative.PROPOSE:
-                self.received_proposition = msg.get_content()
+                self.received_proposition = self.items[msg.get_content()]
                 if self.preferences.is_item_among_top_10_percent(
                     self.received_proposition, self.items
                 ):
@@ -106,7 +103,7 @@ class ArgumentAgent(CommunicatingAgent):
                             self.get_name(),
                             msg.get_exp(),
                             MessagePerformative.ACCEPT,
-                            self.received_proposition,
+                            self.received_proposition.get_name(),
                         )
                     )
                 else:
@@ -115,7 +112,7 @@ class ArgumentAgent(CommunicatingAgent):
                             self.get_name(),
                             msg.get_exp(),
                             MessagePerformative.ASK_WHY,
-                            self.received_proposition,
+                            self.received_proposition.get_name(),
                         )
                     )
             elif (
@@ -127,7 +124,7 @@ class ArgumentAgent(CommunicatingAgent):
                         self.get_name(),
                         None,
                         MessagePerformative.COMMIT,
-                        self.proposed_item,
+                        self.proposed_item.get_name(),
                     )
                 )
                 self.has_committed = True
@@ -142,7 +139,7 @@ class ArgumentAgent(CommunicatingAgent):
                             self.get_name(),
                             None,
                             MessagePerformative.COMMIT,
-                            self.received_proposition,
+                            self.received_proposition.get_name(),
                         )
                     )
                     self.has_committed = True
@@ -152,16 +149,17 @@ class ArgumentAgent(CommunicatingAgent):
                         self.get_name(),
                         None,
                         MessagePerformative.ARGUE,
-                        self.support_proposal(self.proposed_item),
+                        str(self.support_proposal(self.proposed_item)),
                     )
                 )
             elif msg.get_performative() == MessagePerformative.ARGUE:
-                 self.send_message(
+                argument = Argument.parse(msg.get_content(), self.items)
+                self.send_message(
                     Message(
                         self.get_name(),
                         None,
                         MessagePerformative.ARGUE,
-                        self.support_proposal(self.proposed_item),
+                        str(self.support_proposal(self.proposed_item)),
                     )
                 )
 
@@ -175,7 +173,7 @@ class ArgumentAgent(CommunicatingAgent):
         params:
             item (str): name of the item which was proposed
         returns:
-            string - the strongest supportive argument
+            Argument - the strongest supportive argument
         """
         premises = Argument.get_supporting_premises(item, self.preferences)
         strongest_argument = premises[0]

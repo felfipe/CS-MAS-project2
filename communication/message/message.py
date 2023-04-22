@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from .message_performative import MessagePerformative
@@ -25,7 +25,7 @@ class Message:
         from_agent: str,
         to_agent: Optional[str],
         message_performative: "MessagePerformative",
-        content: Any,
+        content: str,
     ):
         """Create a new message."""
         self.__from_agent = from_agent
@@ -58,6 +58,6 @@ class Message:
         """Return the performative of the message."""
         return self.__message_performative
 
-    def get_content(self) -> Any:
+    def get_content(self) -> str:
         """Return the content of the message."""
         return self.__content

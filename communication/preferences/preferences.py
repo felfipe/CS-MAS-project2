@@ -3,7 +3,7 @@
 import math
 import os
 import random
-from typing import List
+from typing import List, Dict
 
 import pandas as pd
 
@@ -28,7 +28,7 @@ class Preferences:
         self.__criterion_value_list: List[CriterionValue] = []
 
     @staticmethod
-    def generate_random(items: List[Item]):
+    def generate_random(items: Dict[str, Item]):
         # Generate a random criterion name list
         p = Preferences()
         criterion_name_list = list(CriterionName)
@@ -36,7 +36,7 @@ class Preferences:
         p.set_criterion_name_list(criterion_name_list)
 
         # Generate a random value for each criterion
-        for item in items:
+        for item in items.values():
             for criterion_name in CriterionName:
                 # Random value for each item and criterion
                 value = random.choice(list(Value))
@@ -45,7 +45,7 @@ class Preferences:
         return p
 
     @staticmethod
-    def load(dir_path: str, items: List[Item]):
+    def load(dir_path: str, items: Dict[str, Item]):
         p = Preferences()
         p.read_criteria_from_csv(os.path.join(dir_path, "criteria.csv"))
         p.read_values_from_csv(os.path.join(dir_path, "values.csv"), items)
@@ -65,28 +65,25 @@ class Preferences:
         # Set criteria
         self.set_criterion_name_list(criterion_name_list)
 
-    def read_values_from_csv(self, filepath: str, items: List[Item]):
+    def read_values_from_csv(self, filepath: str, items: Dict[str, Item]):
         data = pd.read_csv(filepath)
 
         # Create any items which are missing in the items dictionary
-        items_dict = {item.get_name(): item for item in items}
         for item_name in data["item"].unique():
-            if item_name not in items_dict:
-                i = Item(item_name, "")
-                items_dict[item_name] = i
-                items.append(i)
+            if item_name not in items:
+                items[item_name] = Item(item_name, "No description.")
 
         # Go through each row and add the corresponding criterion value
         for _, row in data.iterrows():
             # Parse this row's data
-            item = items_dict[row["item"]]
+            item = items[row["item"]]
             criterion_name = CriterionName[row["criterion_name"]]
             value = Value[row["value"]]
 
             # Add it to the preferences
             self.add_criterion_value(CriterionValue(item, criterion_name, value))
 
-        return items_dict
+        return items
 
     def get_criterion_name_list(self):
         """Returns the list of criterion name."""
@@ -131,11 +128,11 @@ class Preferences:
         """Returns if the item 1 is preferred to the item 2."""
         return item_1.get_score(self) > item_2.get_score(self)
 
-    def most_preferred(self, item_list: List[Item]) -> Item:
+    def most_preferred(self, item: Dict[str, Item]) -> Item:
         """Returns the most preferred item from a list."""
 
         # compute scores to each item and filter only the best scores
-        scores = [(item.get_score(self), item) for item in item_list]
+        scores = [(item.get_score(self), item) for item in item.values()]
         max_score = max(scores)[0]
         best_scores = [item for item in scores if item[0] == max_score]
 
@@ -144,13 +141,13 @@ class Preferences:
 
         return selected_item
 
-    def is_item_among_top_10_percent(self, item: Item, item_list: List[Item]) -> bool:
+    def is_item_among_top_10_percent(self, item: Item, items: Dict[str, Item]) -> bool:
         """
         Return whether a given item is among the top 10 percent of the preferred items.
 
         :return: a boolean, True means that the item is among the favourite ones
         """
-        item_list = item_list.copy()
+        item_list = list(items.values())
 
         # take the ceil of the resulting division
         k_top10 = math.ceil(len(item_list) / 10)
