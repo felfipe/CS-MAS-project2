@@ -15,8 +15,8 @@ from communication.preferences.item import Item
 from communication.preferences.preferences import Preferences
 from communication.preferences.values import Value
 
-PROB_ACCEPT_ARGUMENT = 0.0 # Probability to accept an argument
-TOP_K = 0.00 # Percent of items to consider in top-k
+PROB_ACCEPT_ARGUMENT = 0.2 # Probability to accept an argument
+TOP_K = 0.1 # Percent of items to consider in top-k
 
 class ArgumentModel(Model):
     """ArgumentModel which inherit from Model"""
@@ -308,9 +308,8 @@ class ArgumentAgent(CommunicatingAgent):
                     else:
                         # No possible counter argument to accept the item,
                         # so propose another one
-                        del self.items[argument.item.get_name()]
                         item = self.preferences.most_preferred(self.items)
-                        if item in self.accepted_items:
+                        if item in self.accepted_items and argument.item in self.received_items:
                             self.send_message(
                                 Message(
                                     self.get_name(),
