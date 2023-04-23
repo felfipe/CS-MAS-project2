@@ -131,9 +131,9 @@ class ArgumentAgent(CommunicatingAgent):
 
             elif msg.get_performative() == MessagePerformative.COMMIT:
                 if msg.get_content() == self.proposed_item and self.has_committed:
-                    self.items.remove(self.proposed_item)
+                    self.items.pop(self.proposed_item.get_name())
                 elif msg.get_content() == self.received_proposition:
-                    self.items.remove(self.received_proposition)
+                    self.items.pop(self.received_proposition.get_name())
                     self.send_message(
                         Message(
                             self.get_name(),
@@ -154,14 +154,24 @@ class ArgumentAgent(CommunicatingAgent):
                 )
             elif msg.get_performative() == MessagePerformative.ARGUE:
                 argument = Argument.parse(msg.get_content(), self.items)
-                self.send_message(
-                    Message(
-                        self.get_name(),
-                        None,
-                        MessagePerformative.ARGUE,
-                        str(self.support_proposal(self.proposed_item)),
+                if self.preferences.is_item_among_top_10_percent(argument.item, self.items):
+                    self.send_message(
+                        Message(
+                            self.get_name(),
+                            msg.get_exp(),
+                            MessagePerformative.ACCEPT,
+                            argument.item.get_name(),
+                        )
                     )
-                )
+                else:
+                    self.send_message(
+                        Message(
+                            self.get_name(),
+                            None,
+                            MessagePerformative.ARGUE,
+                            str(self.support_proposal(self.proposed_item)),
+                        )
+                    )
 
 
     def get_preferences(self) -> Preferences:
