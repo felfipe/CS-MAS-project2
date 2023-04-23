@@ -3,7 +3,7 @@
 import math
 import os
 import random
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 import pandas as pd
 
@@ -133,7 +133,7 @@ class Preferences:
 
         # compute scores to each item and filter only the best scores
         scores = [(item.get_score(self), item) for item in item.values()]
-        max_score = max(scores)[0]
+        max_score = max(scores, key=lambda x: x[0])[0]
         best_scores = [item for item in scores if item[0] == max_score]
 
         # select randomly among the best scores
@@ -141,17 +141,17 @@ class Preferences:
 
         return selected_item
 
-    def is_item_among_top_10_percent(self, item: Item, items: Dict[str, Item]) -> bool:
+    def is_item_among_top_10_percent(self, item: Item, items: Dict[str, Item], x : Optional[int] = 0.1) -> bool:
         """
         Return whether a given item is among the top 10 percent of the preferred items.
+        Optionally, it is possible to pass x as parameter to change the percentage.
 
         :return: a boolean, True means that the item is among the favourite ones
         """
         item_list = list(items.values())
 
         # take the ceil of the resulting division
-        k_top10 = math.ceil(len(item_list) / 10)
-
+        k_top10 = math.ceil(x * len(item_list))
         item_list.sort(key=lambda item: item.get_score(self), reverse=True)
 
         if item in item_list[:k_top10]:

@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from mesa import Model
 from mesa.time import RandomActivation
+import random
 
 from communication.agent.communicating_agent import CommunicatingAgent
 from communication.arguments.argument import Argument
@@ -14,22 +15,30 @@ from communication.preferences.item import Item
 from communication.preferences.preferences import Preferences
 from communication.preferences.values import Value
 
-PROB_ACCEPT_ARGUMENT = 0.8
-
+PROB_ACCEPT_ARGUMENT = 0.0 # Probability to accept an argument
+TOP_K = 0.00 # Percent of items to consider in top-k
 
 class ArgumentModel(Model):
     """ArgumentModel which inherit from Model"""
 
     def __init__(
-        self, prefs_agent_1: Optional[str] = None, prefs_agent_2: Optional[str] = None
+        self, prefs_agent_1: Optional[str] = None, prefs_agent_2: Optional[str] = None, number_items: Optional[int] = None
     ):
         super().__init__()
         self.scheduler = RandomActivation(self)
         self.__messages_service = MessageService(self.scheduler)
-        self.items = {
-            "ICED": Item("ICED", "A super cool diesel engine"),
-            "E": Item("E", "A very quiet engine"),
-        }
+        random.seed(2)
+        if number_items is not None:
+            self.items = {
+                f'Engine{str(i)}' : Item(f'Engine{str(i)}', f'No description') for i in range(number_items)
+            }
+            prefs_agent_1 = None
+            prefs_agent_2 = None
+        else:
+            self.items = {
+                "ICED": Item("ICED", "A super cool diesel engine"),
+                "E": Item("E", "A very quiet engine"),
+            }
 
         self.agent_1 = self._create_agent("Alice", prefs_agent_1, True)
         self.agent_2 = self._create_agent("Bob", prefs_agent_2, False)
@@ -198,7 +207,7 @@ class ArgumentAgent(CommunicatingAgent):
             if msg.get_performative() == MessagePerformative.PROPOSE:
                 received_proposition = self.items[msg.get_content()]
                 if self.preferences.is_item_among_top_10_percent(
-                    received_proposition, self.items
+                    received_proposition, self.items, TOP_K
                 ):
                     self.accepted_items.append(received_proposition)
                     self.send_message(
@@ -351,7 +360,7 @@ class ArgumentAgent(CommunicatingAgent):
     def process_argument(self, argument: Argument) -> Optional[Argument]:
         # If the other agent wants the same thing as us, just accept it
         our_decision = self.preferences.is_item_among_top_10_percent(
-            argument.item, self.items
+            argument.item, self.items, TOP_K
         )
         if our_decision == argument.decision:
             return None
@@ -394,6 +403,6 @@ class ArgumentAgent(CommunicatingAgent):
 
 if __name__ == "__main__":
     argument_model = ArgumentModel(
-        prefs_agent_1="data/agent_1", prefs_agent_2="data/agent_2"
+        prefs_agent_1="data/agent_1", prefs_agent_2="data/agent_2", number_items=100
     )
     argument_model.run_steps(500)
