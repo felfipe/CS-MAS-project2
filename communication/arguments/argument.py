@@ -51,7 +51,7 @@ class Argument:
         self.equalities.append(Equality(criterion_name, value))
 
     def __str__(self) -> str:
-        prefix = "" if self.decision else "not "
+        prefix = "    " if self.decision else "not "
         premises = self.equalities + self.comparisons
         return f"{prefix}{self.item.get_name()} <- " + ", ".join(map(str, premises))
 
@@ -148,6 +148,39 @@ class Argument:
                 raise ValueError(msg)
 
         return Argument(item, decision, comparisons, equalities)
+
+    def is_opposite(self, other: "Argument") -> bool:
+        if (
+            self.item != other.item
+            or len(self.comparisons) != 1
+            or len(self.equalities) != 1
+            or len(other.comparisons) != 1
+            or len(other.equalities) != 1
+        ):
+            return False
+
+        self_cmp = self.comparisons[0]
+        other_cmp = other.comparisons[0]
+
+        self_eq = self.equalities[0]
+        other_eq = other.equalities[0]
+
+        if (self_cmp.better_criterion_name, self_cmp.worse_criterion_name) != (
+            other_cmp.worse_criterion_name,
+            other_cmp.better_criterion_name,
+        ):
+            return False
+
+        if (
+            self_eq.criterion_name != self_cmp.better_criterion_name
+            or other_eq.criterion_name != self_cmp.worse_criterion_name
+        ):
+            return False
+
+        v_avg = Value.AVERAGE.value
+        v1 = self_eq.value.value
+        v2 = other_eq.value.value
+        return (v1 < v_avg and v2 > v_avg) or (v1 > v_avg and v2 < v_avg)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Argument):
