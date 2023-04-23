@@ -3,6 +3,7 @@ from typing import List, Optional
 from mesa import Model
 from mesa.time import RandomActivation
 import random
+import sys
 
 from communication.agent.communicating_agent import CommunicatingAgent
 from communication.arguments.argument import Argument
@@ -17,6 +18,7 @@ from communication.preferences.values import Value
 
 PROB_ACCEPT_ARGUMENT = 0.2 # Probability to accept an argument
 TOP_K = 0.1 # Percent of items to consider in top-k
+FIRST_AGENT = "Alice" # "Bob" # First agent to send a message
 
 class ArgumentModel(Model):
     """ArgumentModel which inherit from Model"""
@@ -40,8 +42,8 @@ class ArgumentModel(Model):
                 "E": Item("E", "A very quiet engine"),
             }
 
-        self.agent_1 = self._create_agent("Alice", prefs_agent_1, True)
-        self.agent_2 = self._create_agent("Bob", prefs_agent_2, False)
+        self.agent_1 = self._create_agent("Alice", prefs_agent_1, FIRST_AGENT == "Alice")
+        self.agent_2 = self._create_agent("Bob", prefs_agent_2, FIRST_AGENT == "Bob")
 
         self.running = True
 
@@ -402,6 +404,6 @@ class ArgumentAgent(CommunicatingAgent):
 
 if __name__ == "__main__":
     argument_model = ArgumentModel(
-        prefs_agent_1="data/agent_1", prefs_agent_2="data/agent_2", number_items=100
+        prefs_agent_1="data/agent_1", prefs_agent_2="data/agent_2", number_items=10
     )
     argument_model.run_steps(500)
