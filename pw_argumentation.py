@@ -1,9 +1,8 @@
+import argparse
 from typing import List, Optional
 
 from mesa import Model
 from mesa.time import RandomActivation
-import random
-import sys
 
 from communication.agent.communicating_agent import CommunicatingAgent
 from communication.arguments.argument import Argument
@@ -16,45 +15,62 @@ from communication.preferences.item import Item
 from communication.preferences.preferences import Preferences
 from communication.preferences.values import Value
 
-PROB_ACCEPT_ARGUMENT = 0.2 # Probability to accept an argument
-TOP_K = 0.1 # Percent of items to consider in top-k
-FIRST_AGENT = "Alice" # "Bob" # First agent to send a message
 
 class ArgumentModel(Model):
     """ArgumentModel which inherit from Model"""
 
     def __init__(
-        self, prefs_agent_1: Optional[str] = None, prefs_agent_2: Optional[str] = None, number_items: Optional[int] = None
+        self,
+        prefs_agent_1: Optional[str] = None,
+        prefs_agent_2: Optional[str] = None,
+        number_items: Optional[int] = None,
+        prob_accept_argument: float = 0.2,
+        first_agent: str = "Alice",
+        top_k: float = 0.1,
     ):
         super().__init__()
         self.scheduler = RandomActivation(self)
         self.__messages_service = MessageService(self.scheduler)
-        random.seed(2)
+
+        # Probability to accept an argument
+        self.prob_accept_argument = prob_accept_argument
+        # Percent of items to consider in top-k
+        self.top_k = top_k
+        # # First agent to send a message
+        self.first_agent = first_agent
+
         if number_items is not None:
             self.items = {
-                f'Engine{str(i)}' : Item(f'Engine{str(i)}', f'No description') for i in range(number_items)
+                f"Engine{str(i)}": Item(f"Engine{str(i)}", "No description")
+                for i in range(number_items)
             }
-            prefs_agent_1 = None
-            prefs_agent_2 = None
+            if prefs_agent_1 is not None or prefs_agent_2 is not None:
+                print(
+                    "Warning: ignoring preference csv files because number_items was specified"
+                )
+                prefs_agent_1 = None
+                prefs_agent_2 = None
         else:
             self.items = {
                 "ICED": Item("ICED", "A super cool diesel engine"),
                 "E": Item("E", "A very quiet engine"),
             }
 
-        self.agent_1 = self._create_agent("Alice", prefs_agent_1, FIRST_AGENT == "Alice")
-        self.agent_2 = self._create_agent("Bob", prefs_agent_2, FIRST_AGENT == "Bob")
+        self.agent_1 = self._create_agent("Alice", prefs_agent_1)
+        self.agent_2 = self._create_agent("Bob", prefs_agent_2)
 
         self.running = True
 
-    def _create_agent(self, name: str, prefs_path: Optional[str], initial_agent: bool):
+    def _create_agent(self, name: str, prefs_path: Optional[str]):
         # Load or generate the preferences depending on if the prefs_path is set
         if prefs_path is None:
             prefs = Preferences.generate_random(self.items, rand=self.random)
         else:
             prefs = Preferences.load(prefs_path, self.items)
+            print(f"Loading agent {name} from {prefs_path}")
 
         # Create the agent and add it to the scheduler
+        initial_agent = name == self.first_agent
         agent = ArgumentAgent(self.next_id(), self, name, prefs, initial_agent)
         self.scheduler.add(agent)
 
@@ -75,7 +91,8 @@ class ArgumentModel(Model):
                     self.agent_1.commited_item == self.agent_2.commited_item is not None
                 )
                 print("Done. Chosen product:", self.agent_1.commited_item)
-                break
+                return
+        print("Simulation not finished, max steps reached")
 
 
 class ExtendedArgument:
@@ -209,7 +226,7 @@ class ArgumentAgent(CommunicatingAgent):
             if msg.get_performative() == MessagePerformative.PROPOSE:
                 received_proposition = self.items[msg.get_content()]
                 if self.preferences.is_item_among_top_10_percent(
-                    received_proposition, self.items, TOP_K
+                    received_proposition, self.items, self.model.top_k
                 ):
                     self.accepted_items.append(received_proposition)
                     self.send_message(
@@ -281,7 +298,7 @@ class ArgumentAgent(CommunicatingAgent):
                         # No possible counter argument to refuse the item
                         # If possible, propose a product.
                         # Otherwise, accept the current one.
-                        if self.random.random() < PROB_ACCEPT_ARGUMENT:
+                        if self.random.random() < self.model.prob_accept_argument:
                             self.send_message(
                                 Message(
                                     self.get_name(),
@@ -311,7 +328,10 @@ class ArgumentAgent(CommunicatingAgent):
                         # No possible counter argument to accept the item,
                         # so propose another one
                         item = self.preferences.most_preferred(self.items)
-                        if item in self.accepted_items and argument.item in self.received_items:
+                        if (
+                            item in self.accepted_items
+                            and argument.item in self.received_items
+                        ):
                             self.send_message(
                                 Message(
                                     self.get_name(),
@@ -361,7 +381,7 @@ class ArgumentAgent(CommunicatingAgent):
     def process_argument(self, argument: Argument) -> Optional[Argument]:
         # If the other agent wants the same thing as us, just accept it
         our_decision = self.preferences.is_item_among_top_10_percent(
-            argument.item, self.items, TOP_K
+            argument.item, self.items, self.model.top_k
         )
         if our_decision == argument.decision:
             return None
@@ -402,8 +422,89 @@ class ArgumentAgent(CommunicatingAgent):
         return None
 
 
-if __name__ == "__main__":
-    argument_model = ArgumentModel(
-        prefs_agent_1="data/agent_1", prefs_agent_2="data/agent_2", number_items=10
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--preset",
+        "-p",
+        action="store_true",
+        help=(
+            "Uses the same agent preferences and values as defined in the project's"
+            "description, and the two example engines (ICED and E). "
+            "Otherwise, randomly generated products will be used."
+        ),
     )
-    argument_model.run_steps(500)
+    parser.add_argument(
+        "--number-items",
+        "-n",
+        type=int,
+        default=None,
+        metavar="N",
+        help=(
+            "Run with N randomly generated items. "
+            "Default: 10 (unless --preset is specified)."
+        ),
+    )
+    parser.add_argument(
+        "--max-steps",
+        type=int,
+        default=1000,
+        help="Maximum number of steps per simulation. Default: 1000",
+    )
+    parser.add_argument(
+        "--prob-accept-argument",
+        type=float,
+        default=0.2,
+        metavar="PROB",
+        help=(
+            "The probability that an agent will accept an item if they lose"
+            "the argument. Otherwise, if possible, they will suggest an alternative"
+            "item. Default: 0.2"
+        ),
+    )
+    parser.add_argument(
+        "--first-agent",
+        choices=["Alice", "Bob"],
+        default="Alice",
+        help="The agent who makes the first proposal. Default: Alice",
+    )
+    parser.add_argument(
+        "--top-k",
+        "-k",
+        metavar="K",
+        type=float,
+        default=0.1,
+        help=
+            "The percentage of best items which are acceptable for an agent. "
+            "Default: 0.1"
+        ,
+    )
+    args = parser.parse_args()
+
+    prefs_agent_1 = None
+    prefs_agent_2 = None
+    if args.preset:
+        if args.number_items not in (None, 2):
+            print(
+                f"Warning: --preset always uses two items (ICED and E). "
+                f"Ignoring argument --number-items={args.number_items}."
+            )
+        prefs_agent_1 = "data/agent_1"
+        prefs_agent_2 = "data/agent_2"
+        args.number_items = None
+    elif args.number_items is None:
+        args.number_items = 10
+
+    argument_model = ArgumentModel(
+        prefs_agent_1=prefs_agent_1,
+        prefs_agent_2=prefs_agent_2,
+        number_items=args.number_items,
+        prob_accept_argument=args.prob_accept_argument,
+        first_agent=args.first_agent,
+        top_k=args.top_k,
+    )
+    argument_model.run_steps(args.max_steps)
+
+
+if __name__ == "__main__":
+    main()

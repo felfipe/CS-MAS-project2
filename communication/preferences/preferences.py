@@ -146,7 +146,7 @@ class Preferences:
 
         return selected_item
 
-    def is_item_among_top_10_percent(self, item: Item, items: Dict[str, Item], x : Optional[int] = 0.1) -> bool:
+    def is_item_among_top_10_percent(self, item: Item, items: Dict[str, Item], x : Optional[float] = 0.1) -> bool:
         """
         Return whether a given item is among the top 10 percent of the preferred items.
         Optionally, it is possible to pass x as parameter to change the percentage.
