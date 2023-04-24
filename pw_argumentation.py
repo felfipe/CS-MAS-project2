@@ -50,7 +50,7 @@ class ArgumentModel(Model):
     def _create_agent(self, name: str, prefs_path: Optional[str], initial_agent: bool):
         # Load or generate the preferences depending on if the prefs_path is set
         if prefs_path is None:
-            prefs = Preferences.generate_random(self.items)
+            prefs = Preferences.generate_random(self.items, rand=self.random)
         else:
             prefs = Preferences.load(prefs_path, self.items)
 
@@ -193,7 +193,7 @@ class ArgumentAgent(CommunicatingAgent):
             print(*messages, sep="\n")
 
         if self.initial_agent and not self.accepted_items:
-            item = self.preferences.most_preferred(self.items)
+            item = self.preferences.most_preferred(self.items, rand=self.random)
             self.accepted_items.append(item)
             self.send_message(
                 Message(

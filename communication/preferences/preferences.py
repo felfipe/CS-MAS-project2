@@ -28,18 +28,21 @@ class Preferences:
         self.__criterion_value_list: List[CriterionValue] = []
 
     @staticmethod
-    def generate_random(items: Dict[str, Item]):
+    def generate_random(items: Dict[str, Item], rand: Optional[random.Random]=None):
+        if rand is None:
+            rand = random.Random()
+
         # Generate a random criterion name list
         p = Preferences()
         criterion_name_list = list(CriterionName)
-        random.shuffle(criterion_name_list)
+        rand.shuffle(criterion_name_list)
         p.set_criterion_name_list(criterion_name_list)
 
         # Generate a random value for each criterion
         for item in items.values():
             for criterion_name in CriterionName:
                 # Random value for each item and criterion
-                value = random.choice(list(Value))
+                value = rand.choice(list(Value))
                 p.add_criterion_value(CriterionValue(item, criterion_name, value))
 
         return p
@@ -128,8 +131,10 @@ class Preferences:
         """Returns if the item 1 is preferred to the item 2."""
         return item_1.get_score(self) > item_2.get_score(self)
 
-    def most_preferred(self, item: Dict[str, Item]) -> Item:
+    def most_preferred(self, item: Dict[str, Item], rand: Optional[random.Random]=None) -> Item:
         """Returns the most preferred item from a list."""
+        if rand is None:
+            rand = random.Random()
 
         # compute scores to each item and filter only the best scores
         scores = [(item.get_score(self), item) for item in item.values()]
@@ -137,7 +142,7 @@ class Preferences:
         best_scores = [item for item in scores if item[0] == max_score]
 
         # select randomly among the best scores
-        selected_item = random.choice(best_scores)[1]
+        selected_item = rand.choice(best_scores)[1]
 
         return selected_item
 
