@@ -2,6 +2,12 @@
 
 This is an implementation of an argumentation model with 2 agents arguing between types of car engines. Each engine has five properties : cost, consumption, durability, environmental impact and degree of noise. Each agent has a list of property preferences.
 
+## Authors
+
+Fernando Kurike Matsumoto
+
+Victor Felipe Domingues do Amaral
+
 ## Installation and execution
 
 To install the dependencies, use pip and the [requirements.txt](communication/requirements.txt) file:
