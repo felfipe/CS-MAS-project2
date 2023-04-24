@@ -1,33 +1,41 @@
 # Argumentation-based Dialogue for choosing a car engine
 
-This is a implementation of a an argumentation model with 2 agents arguing between types of car engines. Each engine has five properties : cost, consumption, durability, environmental impact and degree of Noise. Each agent has a list of properties preferences.
+This is an implementation of an argumentation model with 2 agents arguing between types of car engines. Each engine has five properties : cost, consumption, durability, environmental impact and degree of noise. Each agent has a list of property preferences.
 
+## Installation and execution
 
-## To install and run
+To install the dependencies, use pip and the [requirements.txt](communication/requirements.txt) file:
 
-To install the dependencies use pip and the requirements.txt in this directory. e.g.
+```pip install -r communication/requirements.txt```
 
-```pip install -r requirements.txt```
+To run the code with the example items and preferences:
 
-To run:
+```python3 pw_argumentation.py --preset```
 
-```python3 pw_argumentation.py```
+To run the code with random items and preferences, use the `--number-items=N`
+argument. For example, for 10 random items:
+
+```python3 pw_argumentation.py --number-items=10```
+
+Additional flags supported by the script are `--prob-acccept-argument`, `--first-agent`
+and `--top-k`. These behavior of these parameters is described in the next section.
+For more information about the accepted flags, see:
+
+```python3 pw_argumentation.py --help```
 
 ## Implementation aspects
 
-All of the model's behaviors were implemented in accordance with the instructions from the course, except for certain aspects listed bellow:
+All of the model's behaviors were implemented in accordance with the instructions from the course, except for certain aspects listed below:
 
-- The constructor of the model allows for the option of passing a CSV file path that contains the preferences of each agent and items in the format found in the ```data``` folder. If no file is passed, then the preferences and items will be randomly generated. The ```number_items``` parameter specifies the number of engines to be created. If it is not None, the preferences of each agent will also be randomly selected.
+- The constructor of the model allows for the option of passing a CSV file path that contains the preferences of each agent and items in the format found in the `data` folder. If no file is passed, then the preferences and items will be randomly generated. The `number_items` parameter specifies the number of engines to be created. If it is not None, the preferences of each agent will also be randomly selected.
 
-- the parameter ```FIRST_AGENT``` $\in$ ```{"Alice", "Bob"}``` specifies the name of the agent that will initiate the conversation.
+- The parameter `first_agent` &in; `{"Alice", "Bob"}` specifies the name of the agent that will initiate the conversation.
 
-- The funtion ```is_item_among_top_10_percent()``` identifies whether an item is among an agent's top 10% preferred items. To ensure that at least one item is returned when there are fewer than 10 items in total, we take in consideration the ceiling of the number of items divided by 10.
+- The function `is_item_among_top_10_percent()` identifies whether an item is among an agent's top 10% preferred items. To ensure that at least one item is returned when there are fewer than 10 items in total, we take in consideration the ceiling of the number of items divided by 10.
 
-- We introduced a parameter ```TOP_K``` indicating to ```is_item_among_top_10_percent()``` the percentage of items to consider.
+- We introduced a parameter `top_k` indicating to `is_item_among_top_10_percent()` the percentage of items to consider.
 
-- If there is no more valid argument, the agent will try to propose another item with a probability of ```PROB_ACCEPT_ARGUMENT``` (a parameter we introduced), otherwise the agent will be convinced by the argument and accept the item. The new proposed item will be the best item (from agent's point of view) not yet proposed by the agent.
-
-
+- If an agent cannot attack the other agent's latest argument, they will be convinced by the argument and accept the item with probability `prob_accept_item` (a parameter we introduced). Otherwise, they will try to propose the best item that hasn't been proposed yet.
 
 ## Example of arguments generated
 
